@@ -5,7 +5,18 @@ const express = require("express");
 const connectDB = require("./utils/db");
 
 
-connectDB();
+connectDB()
+    .then(() => {
+        app.listen(port, () => {
+            console.log(`Server is running on port ${port}`);
+        });
+    })
+    .catch((error) => {
+        console.error("Failed to start server:", error);
+        process.exit(1);
+    });
+
+    
 const urlRouter = require("./routes/url.routes");
 const userRouter = require("./routes/user.routes");
 const app = express();
