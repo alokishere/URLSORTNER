@@ -22,7 +22,7 @@ const userRouter = require("./routes/user.routes");
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: [ "http://localhost:3000", "http://localhost:5173", "https://alokurl.vercel.app/" ],
+  origin: [ "http://localhost:3000", "http://localhost:5173", "https://alokurl.vercel.app/","https://urlview.vercel.app/" ,"https://u.alokdev.in/","https://url.alokdev.in/" ],
   credentials: true,
 }));
 app.use(cookieParser());
