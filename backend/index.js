@@ -4,27 +4,34 @@ const cookieParser = require("cookie-parser");
 const express = require("express");
 const connectDB = require("./utils/db");
 
-
 connectDB()
-    .then(() => {
-        app.listen(port, () => {
-            console.log(`Server is running on port ${port}`);
-        });
-    })
-    .catch((error) => {
-        console.error("Failed to start server:", error);
-        process.exit(1);
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
     });
-
+  })
+  .catch((error) => {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  });
 
 const urlRouter = require("./routes/url.routes");
 const userRouter = require("./routes/user.routes");
 const app = express();
 app.use(express.json());
-app.use(cors({
-  origin: [ "http://localhost:3000", "http://localhost:5173", "https://alokurl.vercel.app/","https://urlview.vercel.app/" ,"https://u.alokdev.in/","https://url.alokdev.in/" ],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "https://alokurl.vercel.app",
+      "https://urlview.vercel.app",
+      "https://u.alokdev.in",
+      "https://url.alokdev.in",
+    ],
+    credentials: true,
+  }),
+);
 app.use(cookieParser());
 
 const port = process.env.PORT || 3000;
