@@ -1,14 +1,30 @@
+// const mongoose = require("mongoose");
+
+// async function connectDB() {
+//     await mongoose.connect(process.env.MONGO_URI)
+//     .then(() => {
+//         console.log("Connected to MongoDB");
+//     })
+//     .catch((err) => {
+//         console.error("Error connecting to MongoDB:", err);
+//     });
+
+// }
+
+// module.exports = connectDB;
+
+
+
 const mongoose = require("mongoose");
 
 async function connectDB() {
-    await mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
         console.log("Connected to MongoDB");
-    })
-    .catch((err) => {
-        console.error("Error connecting to MongoDB:", err);
-    });
-
+    } catch (error) {
+        console.error("Error connecting to MongoDB:", error);
+        throw error;
+    }
 }
 
 module.exports = connectDB;
