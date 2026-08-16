@@ -16,13 +16,13 @@ connectDB()
         process.exit(1);
     });
 
-    
+
 const urlRouter = require("./routes/url.routes");
 const userRouter = require("./routes/user.routes");
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: [ "http://localhost:3000", "http://localhost:5173", "https://alokurl.vercel.app/" ],
   credentials: true,
 }));
 app.use(cookieParser());
