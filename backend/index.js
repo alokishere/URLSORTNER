@@ -1,20 +1,25 @@
 require("dotenv").config();
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const express = require("express");
 const connectDB = require("./utils/db");
 
+
 connectDB();
-const router = require("./routes/url.routes");
+const urlRouter = require("./routes/url.routes");
+const userRouter = require("./routes/user.routes");
 const app = express();
 app.use(express.json());
 app.use(cors({
   origin: "http://localhost:5173",
   credentials: true,
 }));
+app.use(cookieParser());
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-app.use("/urls", router);
+app.use("/urls", urlRouter);
+app.use("/user", userRouter);
 app.get("/", (req, res) => {
   res.send(
     `<h1>Welcome to the URL Shortener API</h1>

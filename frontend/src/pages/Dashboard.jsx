@@ -14,6 +14,17 @@ function Dashboard() {
             })
     }, []);
 
+    const logoutUser= ()=>{
+        instance.post('/user/logout')
+        .then((res)=>{
+            localStorage.removeItem('user');
+            window.location.href = "/login";
+        })
+        .catch((err)=>{
+            console.log(err);
+        })
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 p-8">
 
@@ -28,13 +39,21 @@ function Dashboard() {
                         Manage and track your short URLs
                     </p>
                 </div>
-
-                <button
+                <div className="flex gap-4">
+                 <button
+                    onClick={() => logoutUser()}
+                    className="bg-red-500 hover:bg-red-700 text-white px-5 py-3 rounded-xl font-semibold transition"
+                >
+                    Logout →
+                </button>
+                 <button
                     onClick={() => window.location.href = "/create"}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-semibold transition"
                 >
                     + Create Short URL
                 </button>
+                </div>
+               
             </div>
 
             {/* Stats */}

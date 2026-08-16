@@ -23,6 +23,7 @@ async function generateNewShortID(req, res) {
         shortID: newShortID,
         redirectUrl: body.url,
         visitHistory: [],
+        createdby: req.user._id,
    });
    res.status(201).json({ shortID: newShortID ,
     url: hostname + '/urls/' + newShortID
