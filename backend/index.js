@@ -12,18 +12,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 
-connectDB()
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
-    });
-  })
-  .catch((error) => {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  });
-
-
 //cores
 const corsOptions = {
   origin: [
@@ -61,6 +49,19 @@ app.get("/", (req, res) => {
   );
 });
 app.get("/:shortID", getRedirectUrl);
+
+
+connectDB()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Db connected and Server is running on port ${port}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  });
+
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

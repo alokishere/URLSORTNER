@@ -1,7 +1,7 @@
 const shortid = require("shortid");
 const Url = require("../models/url.model");
 const jwt = require("jsonwebtoken");
-const restrictToAdmin = require("../middleware/ristricttoadmin");
+
 
 async function getallUrls(req, res) {
   try {
