@@ -17,6 +17,7 @@ connectDB()
 
 const urlRouter = require("./routes/url.routes");
 const userRouter = require("./routes/user.routes");
+const { getRedirectUrl } = require("./controllers/url.controller");
 const app = express();
 app.use(express.json());
 app.use(
@@ -49,6 +50,7 @@ app.get("/", (req, res) => {
     </ul> `,
   );
 });
+app.get('/:shortID', getRedirectUrl);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
