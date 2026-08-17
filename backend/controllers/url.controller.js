@@ -4,33 +4,29 @@ const jwt = require("jsonwebtoken");
 const restrictToAdmin = require("../middleware/ristricttoadmin");
 
 async function getallUrls(req, res) {
-  const userId = req.user && req.user._id;
-  console.log("User ID:", userId);
-  if(restrictToAdmin){
-    try {
-      const urls = await Url.find();
-      res.status(200).json(urls);
-    } catch (error) {
-      res.status(500).json({ error: "Internal server error" });
-    }
-}else{
-  // urls only cretaed by user
-
-
   try {
     const userId = req.user && req.user._id;
+
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const urls = await Url.find({ createdby: userId });
+    // Check if user is admin
+    const isAdmin = req.user.roles && req.user.roles.includes("admin");
+
+    let urls;
+    if (isAdmin) {
+      // Admin can see all URLs
+      urls = await Url.find();
+    } else {
+      // Regular users can only see their own URLs
+      urls = await Url.find({ createdby: userId });
+    }
+
     res.status(200).json(urls);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
-
-}
-
 }
 
 async function generateNewShortID(req, res) {
@@ -105,16 +101,35 @@ async function getRedirectUrl(req, res) {
 }
 
 async function getAnalytics(req, res) {
-  const shortID = req.params.shortID;
-  const urlEntry = await Url.findOne({ shortID: shortID });
-  if (!urlEntry) {
-    return res.status(404).json({ error: "Short ID not found" });
+  try {
+    const shortID = req.params.shortID;
+    const userId = req.user && req.user._id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const urlEntry = await Url.findOne({ shortID: shortID });
+    if (!urlEntry) {
+      return res.status(404).json({ error: "Short ID not found" });
+    }
+
+    // Check if user is admin or owner of the URL
+    const isAdmin = req.user.roles && req.user.roles.includes("admin");
+    const isOwner = urlEntry.createdby.toString() === userId.toString();
+
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ error: "Forbidden - You can only view analytics for URLs you created" });
+    }
+
+    const visitHistory = urlEntry.visitHistory;
+    res.status(200).json({
+      totalVisits: visitHistory.length,
+      visitHistory: visitHistory,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
   }
-  const visitHistory = urlEntry.visitHistory;
-  res.status(200).json({
-    totalVisits: visitHistory.length,
-    visitHistory: visitHistory,
-  });
 }
 
 module.exports = {

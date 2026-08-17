@@ -49,7 +49,7 @@ const CreateSortUrl = () => {
           </button>
         </header>
 
-        <div className="glass-panel rounded-[2rem] p-6 md:p-8">
+        <div className="glass-panel rounded-4xl p-6 md:p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="url" className="mb-3 block text-lg font-semibold text-[#252823]">
@@ -80,7 +80,7 @@ const CreateSortUrl = () => {
           </form>
 
           {result && (
-            <div className="mt-8 rounded-[1.5rem] border border-[#8FA28A]/40 bg-[#C7D3C0]/50 p-5 md:p-6">
+            <div className="mt-8 rounded-3xl border border-[#8FA28A]/40 bg-[#C7D3C0]/50 p-5 md:p-6">
               <div className="mb-4 flex items-center gap-3">
                 <CheckCircle2 className="h-5 w-5 text-[#8FA28A]" />
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#252823]">Short URL Created</p>

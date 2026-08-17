@@ -42,7 +42,7 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-[#F7F4ED] px-4 py-8 text-[#252823] md:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col gap-4 rounded-[2rem] border border-[#C7D3C0] bg-[#F7F4ED] p-6 shadow-xl shadow-[#8FA28A]/10 md:flex-row md:items-center md:justify-between">
+        <header className="mb-8 flex flex-col gap-4 rounded-4xl border border-[#C7D3C0] bg-[#F7F4ED] p-6 shadow-xl shadow-[#8FA28A]/10 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#5F655D]">Overview</p>
             <h1 className="mt-2 text-3xl font-black text-[#252823] md:text-4xl">Dashboard</h1>
@@ -94,7 +94,7 @@ function Dashboard() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[2rem] border border-[#C7D3C0] bg-[#F7F4ED] shadow-xl shadow-[#8FA28A]/10">
+        <section className="overflow-hidden rounded-4xl border border-[#C7D3C0] bg-[#F7F4ED] shadow-xl shadow-[#8FA28A]/10">
           <div className="border-b border-[#C7D3C0] px-6 py-5">
             <h2 className="text-xl font-bold text-[#252823]">My Short URLs</h2>
           </div>
@@ -124,7 +124,8 @@ function Dashboard() {
 
                 <tbody>
                   {urls.map((url) => {
-                    const shortUrl = `${instance.defaults.baseURL}/urls/${url.shortID}`;
+                    const shortUrl = `${instance.defaults.baseURL}/${url.shortID}`;
+                    const viewurl = `${instance.defaults.redirecturl}/${url.shortID}`;
 
                     return (
                       <tr key={url._id} className="border-t border-[#C7D3C0] hover:bg-[#C7D3C0]/25">
@@ -137,9 +138,9 @@ function Dashboard() {
                             href={shortUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block max-w-[220px] truncate text-[#252823] hover:text-[#5F655D]"
+                            className="block max-w-55 truncate text-[#252823] hover:text-[#5F655D]"
                           >
-                            {shortUrl}
+                            {viewurl}
                           </a>
                         </td>
 
@@ -148,7 +149,7 @@ function Dashboard() {
                             href={url.redirectUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block max-w-[260px] truncate text-[#5F655D] hover:text-[#252823]"
+                            className="block max-w-65 truncate text-[#5F655D] hover:text-[#252823]"
                           >
                             {url.redirectUrl}
                           </a>
