@@ -1,10 +1,11 @@
 import axios from 'axios';
 
 const instance = axios.create({
-    baseURL: 'http://localhost:3000',
-    redirecturl: 'localhost:3000',
+    // baseURL: 'http://localhost:3000',
+    // redirecturl: 'localhost:3000',
     // baseURL: 'https://alokurl.vercel.app',
-    // baseURL: 'https://u.alokdev.in',
+    baseURL: 'https://u.alokdev.in',
+    redirecturl: 'u.alokdev.in',
     withCredentials: true,
 });
 
