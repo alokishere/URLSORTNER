@@ -5,6 +5,7 @@ const instance = axios.create({
     // redirecturl: 'localhost:3000',
     // baseURL: 'https://alokurl.vercel.app',
     baseURL: 'https://u.alokdev.in',
+    redirecturl: 'u.alokdev.in',
     withCredentials: true,
 });
 

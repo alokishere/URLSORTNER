@@ -125,7 +125,7 @@ function Dashboard() {
                 <tbody>
                   {urls.map((url) => {
                     const shortUrl = `${instance.defaults.baseURL}/${url.shortID}`;
-
+                    const viewurl =  `${instance.defaults.redirecturl}/${url.shortID}`;
                     return (
                       <tr key={url._id} className="border-t border-[#C7D3C0] hover:bg-[#C7D3C0]/25">
                         <td className="px-6 py-5">
@@ -139,7 +139,7 @@ function Dashboard() {
                             rel="noopener noreferrer"
                             className="block max-w-55 truncate text-[#252823] hover:text-[#5F655D]"
                           >
-                            {shortUrl}
+                            {viewurl}
                           </a>
                         </td>
 

@@ -3,6 +3,14 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const express = require("express");
 const connectDB = require("./utils/db");
+const urlRouter = require("./routes/url.routes");
+const userRouter = require("./routes/user.routes");
+const { getRedirectUrl } = require("./controllers/url.controller");
+
+
+const app = express();
+const port = process.env.PORT || 3000;
+
 
 connectDB()
   .then(() => {
@@ -15,29 +23,29 @@ connectDB()
     process.exit(1);
   });
 
-const urlRouter = require("./routes/url.routes");
-const userRouter = require("./routes/user.routes");
-const { getRedirectUrl } = require("./controllers/url.controller");
-const app = express();
+
+//cores
+const corsOptions = {
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://alokurl.vercel.app",
+    "https://urlview.vercel.app",
+    "https://u.alokdev.in",
+    "https://url.alokdev.in",
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+
 app.use(express.json());
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "https://alokurl.vercel.app",
-      "https://urlview.vercel.app",
-      "https://u.alokdev.in",
-      "https://url.alokdev.in",
-    ],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
-);
+
 app.use(cookieParser());
 
-const port = process.env.PORT || 3000;
+
 
 app.use("/urls", urlRouter);
 app.use("/user", userRouter);
