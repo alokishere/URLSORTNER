@@ -31,6 +31,8 @@ app.use(
       "https://url.alokdev.in",
     ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 app.use(cookieParser());
@@ -50,7 +52,7 @@ app.get("/", (req, res) => {
     </ul> `,
   );
 });
-app.get('/:shortID', getRedirectUrl);
+app.get("/:shortID", getRedirectUrl);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
