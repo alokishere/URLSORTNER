@@ -1,5 +1,4 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   BarChart3,
@@ -7,7 +6,7 @@ import {
   ShieldCheck,
   Sparkles,
   Zap,
-} from 'lucide-react';
+} from "lucide-react";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -15,18 +14,19 @@ const LandingPage = () => {
   const features = [
     {
       icon: Link2,
-      title: 'Smart URL shortening',
-      description: 'Turn long links into clean, branded short URLs in seconds.',
+      title: "Smart URL shortening",
+      description: "Turn long links into clean, branded short URLs in seconds.",
     },
     {
       icon: BarChart3,
-      title: 'Live analytics',
-      description: 'Track clicks and understand what is driving engagement.',
+      title: "Live analytics",
+      description: "Track clicks and understand what is driving engagement.",
     },
     {
       icon: ShieldCheck,
-      title: 'Secure by default',
-      description: 'Keep your links protected with a clean and reliable workflow.',
+      title: "Secure by default",
+      description:
+        "Keep your links protected with a clean and reliable workflow.",
     },
   ];
 
@@ -40,7 +40,9 @@ const LandingPage = () => {
                 <Link2 className="h-5 w-5 text-[#F7F4ED]" />
               </div>
               <div>
-                <p className="text-sm font-semibold tracking-[0.2em] text-[#5F655D] uppercase">URLSortner</p>
+                <p className="text-sm font-semibold tracking-[0.2em] text-[#5F655D] uppercase">
+                  URLSortner
+                </p>
               </div>
             </div>
 
@@ -51,7 +53,7 @@ const LandingPage = () => {
             </div>
 
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate("/login")}
               className="rounded-full border border-[#8FA28A] bg-[#F7F4ED] px-4 py-2 text-sm font-medium text-[#252823] transition hover:bg-[#C7D3C0]"
             >
               Login
@@ -70,16 +72,18 @@ const LandingPage = () => {
               </div>
 
               <h1 className="max-w-xl text-5xl font-black leading-tight tracking-tight text-[#252823] md:text-6xl">
-                Short your long URLs into <span className="text-gradient">memorable</span> links.
+                Short your long URLs into{" "}
+                <span className="text-gradient">memorable</span> links.
               </h1>
 
               <p className="mt-6 max-w-lg text-lg text-[#5F655D]">
-                Create short, memorable links that are easy to share, track, and manage from one clean dashboard.
+                Create short, memorable links that are easy to share, track, and
+                manage from one clean dashboard.
               </p>
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                 <button
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate("/dashboard")}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#8FA28A] px-6 py-3.5 text-base font-semibold text-[#F7F4ED] shadow-lg shadow-[#8FA28A]/20 transition hover:bg-[#7f9980]"
                 >
                   Get Started
@@ -87,7 +91,7 @@ const LandingPage = () => {
                 </button>
 
                 <button
-                  onClick={() => navigate('/register')}
+                  onClick={() => navigate("/register")}
                   className="inline-flex items-center justify-center rounded-full border border-[#8FA28A] bg-[#F7F4ED] px-6 py-3.5 text-base font-semibold text-[#252823] transition hover:bg-[#C7D3C0]"
                 >
                   Create account
@@ -117,32 +121,48 @@ const LandingPage = () => {
                       <div className="h-2.5 w-2.5 rounded-full bg-[#8FA28A]" />
                       Live URL analytics
                     </div>
-                    <span className="rounded-full border border-[#C7D3C0] bg-[#C7D3C0] px-2 py-1 text-xs text-[#252823]">+18.4%</span>
+                    <span className="rounded-full border border-[#C7D3C0] bg-[#C7D3C0] px-2 py-1 text-xs text-[#252823]">
+                      +18.4%
+                    </span>
                   </div>
 
                   <div className="space-y-4">
                     <div className="rounded-2xl border border-[#C7D3C0] bg-[#F7F4ED] p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#5F655D]">Original</p>
-                      <p className="mt-2 truncate text-sm text-[#252823]">https://example.com/very-long-product-page-link</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-[#5F655D]">
+                        Original
+                      </p>
+                      <p className="mt-2 truncate text-sm text-[#252823]">
+                        https://example.com/very-long-product-page-link
+                      </p>
                     </div>
 
                     <div className="rounded-2xl border border-[#8FA28A]/40 bg-[#C7D3C0]/70 p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#252823]">Shortened</p>
-                      <p className="mt-2 text-lg font-semibold text-[#252823]">u.sort/7Rk2mA</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-[#252823]">
+                        Shortened
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-[#252823]">
+                        u.sort/7Rk2mA
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-3 gap-3 pt-2">
                       <div className="rounded-2xl border border-[#C7D3C0] bg-[#F7F4ED] p-3">
                         <p className="text-xs text-[#5F655D]">Clicks</p>
-                        <p className="mt-2 text-2xl font-bold text-[#252823]">2.4k</p>
+                        <p className="mt-2 text-2xl font-bold text-[#252823]">
+                          2.4k
+                        </p>
                       </div>
                       <div className="rounded-2xl border border-[#C7D3C0] bg-[#F7F4ED] p-3">
                         <p className="text-xs text-[#5F655D]">CTR</p>
-                        <p className="mt-2 text-2xl font-bold text-[#252823]">68%</p>
+                        <p className="mt-2 text-2xl font-bold text-[#252823]">
+                          68%
+                        </p>
                       </div>
                       <div className="rounded-2xl border border-[#C7D3C0] bg-[#F7F4ED] p-3">
                         <p className="text-xs text-[#5F655D]">Reach</p>
-                        <p className="mt-2 text-2xl font-bold text-[#252823]">91k</p>
+                        <p className="mt-2 text-2xl font-bold text-[#252823]">
+                          91k
+                        </p>
                       </div>
                     </div>
                   </div>

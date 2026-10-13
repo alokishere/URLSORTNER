@@ -1,125 +1,226 @@
-import React, { useState } from 'react';
-import { ArrowLeft, CheckCircle2, Copy, Link2, Sparkles } from 'lucide-react';
-import instance from '../axios';
+import { useState } from "react";
+import {
+  CheckCircle2,
+  Copy,
+  ExternalLink,
+  Link2,
+  QrCode,
+  Sparkles,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import instance from "../axios";
+import {
+  Button,
+  DashboardCard,
+  PageIntro,
+} from "../components/dashboard/DashboardPrimitives";
 
 const CreateSortUrl = () => {
+  const navigate = useNavigate();
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const url = e.target.url.value;
-
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
     setLoading(true);
-
-    instance
-      .post('/urls/', { url })
-      .then((res) => {
-        setResult(res.data);
-        e.target.reset();
-      })
-      .catch((err) => {
-        console.log(err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    try {
+      const form = new FormData(event.currentTarget);
+      const response = await instance.post("/urls/", { url: form.get("url") });
+      setResult(response.data);
+      event.currentTarget.reset();
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.message ||
+          "We could not create that link. Check the URL and try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const shortUrl =
+    result?.url ||
+    (result?.shortID ? `${instance.defaults.baseURL}/${result.shortID}` : "");
+
   return (
-    <div className="min-h-screen bg-[#F7F4ED] px-4 py-8 text-[#252823] md:px-8">
-      <div className="mx-auto max-w-4xl">
-        <header className="mb-8 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#8FA28A]/40 bg-[#C7D3C0] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#252823]">
-              <Sparkles className="h-3.5 w-3.5 text-[#C8A96B]" />
-              URL tool
-            </div>
-            <h1 className="text-4xl font-black tracking-tight text-[#252823] md:text-5xl">Create short URL</h1>
-            <p className="mt-2 text-[#5F655D]">Turn your long URL into a clean, shareable link.</p>
-          </div>
-
-          <button
-            onClick={() => (window.location.href = '/dashboard')}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-[#8FA28A] bg-[#F7F4ED] px-4 py-2.5 font-medium text-[#252823] transition hover:bg-[#C7D3C0]"
+    <div className="mx-auto max-w-245">
+      <PageIntro
+        eyebrow="Link builder"
+        title="Create a new link"
+        description="Turn a long URL into a clean, shareable link with tracking built in."
+        actions={
+          <Button
+            variant="secondary"
+            onClick={() => navigate("/dashboard/links")}
           >
-            <ArrowLeft className="h-4 w-4" />
-            Dashboard
-          </button>
-        </header>
-
-        <div className="glass-panel rounded-4xl p-6 md:p-8">
+            View my links
+          </Button>
+        }
+      />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(260px,.65fr)]">
+        <DashboardCard className="p-5 sm:p-7">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="url" className="mb-3 block text-lg font-semibold text-[#252823]">
-                Enter the long URL
+              <label
+                htmlFor="url"
+                className="mb-2 block text-sm font-semibold text-(--primary-text)"
+              >
+                Destination URL <span className="text-(--danger)">*</span>
               </label>
-              <div className="flex flex-col gap-3 md:flex-row">
-                <div className="relative flex-1">
-                  <Link2 className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#5F655D]" />
-                  <input
-                    type="url"
-                    id="url"
-                    name="url"
-                    required
-                    placeholder="https://example.com/very-long-url"
-                    className="w-full rounded-2xl border border-[#C7D3C0] bg-[#F7F4ED] py-3 pl-12 pr-4 text-[#252823] outline-none transition focus:border-[#8FA28A]"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="rounded-2xl bg-[#C8A96B] px-6 py-3 font-semibold text-[#252823] shadow-lg shadow-[#C8A96B]/20 transition hover:bg-[#b9984f] disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {loading ? 'Creating...' : 'Shorten'}
-                </button>
+              <div className="relative">
+                <Link2
+                  className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-(--secondary-text)"
+                  aria-hidden="true"
+                />
+                <input
+                  id="url"
+                  name="url"
+                  type="url"
+                  required
+                  placeholder="https://example.com/your-long-link"
+                  className="focus-ring min-h-12 w-full rounded-xl border border-(--border) bg-(--surface) pl-12 pr-4 text-sm text-(--primary-text) placeholder:text-(--secondary-text)/75"
+                />
+                <p className="mt-2 text-xs text-(--secondary-text)">
+                  We&apos;ll keep the original destination intact and give you a
+                  trackable short URL.
+                </p>
               </div>
             </div>
-          </form>
-
-          {result && (
-            <div className="mt-8 rounded-3xl border border-[#8FA28A]/40 bg-[#C7D3C0]/50 p-5 md:p-6">
-              <div className="mb-4 flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-[#8FA28A]" />
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#252823]">Short URL Created</p>
-              </div>
-
-              <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="alias"
+                  className="mb-2 block text-sm font-semibold text-(--primary-text)"
+                >
+                  Custom alias{" "}
+                  <span className="font-normal text-(--secondary-text)">
+                    (optional)
+                  </span>
+                </label>
                 <input
-                  value={result.url}
-                  readOnly
-                  className="flex-1 rounded-2xl border border-[#8FA28A]/40 bg-[#F7F4ED] px-4 py-3 text-[#252823] outline-none"
+                  id="alias"
+                  name="alias"
+                  disabled
+                  placeholder="Available when supported"
+                  className="min-h-12 w-full cursor-not-allowed rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--secondary-text)"
                 />
-
-                <button
-                  onClick={() => navigator.clipboard.writeText(result.url)}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#8FA28A] px-4 py-3 font-semibold text-[#F7F4ED] transition hover:bg-[#7e9380]"
-                >
-                  <Copy className="h-4 w-4" />
-                  Copy
-                </button>
-              </div>
-
-              <div className="mt-5 flex flex-col gap-3 text-sm text-[#5F655D] md:flex-row md:items-center md:justify-between">
-                <p>
-                  Short ID:
-                  <span className="ml-2 font-semibold text-[#252823]">{result.shortID}</span>
+                <p className="mt-2 text-xs text-(--secondary-text)">
+                  The current API accepts destination URLs only.
                 </p>
-
-                <a
-                  href={result.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-[#8FA28A] hover:text-[#74876f]"
+              </div>
+              <div>
+                <label
+                  htmlFor="title"
+                  className="mb-2 block text-sm font-semibold text-(--primary-text)"
                 >
-                  Open URL →
+                  Link title{" "}
+                  <span className="font-normal text-(--secondary-text)">
+                    (optional)
+                  </span>
+                </label>
+                <input
+                  id="title"
+                  name="title"
+                  disabled
+                  placeholder="Available when supported"
+                  className="min-h-12 w-full cursor-not-allowed rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--secondary-text)"
+                />
+                <p className="mt-2 text-xs text-(--secondary-text)">
+                  Titles are not part of the current data model.
+                </p>
+              </div>
+            </div>
+            {error && (
+              <p
+                role="alert"
+                className="rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)"
+              >
+                {error}
+              </p>
+            )}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto"
+            >
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              {loading ? "Creating link..." : "Create short link"}
+            </Button>
+          </form>
+          {result && (
+            <div className="mt-7 rounded-2xl border border-(--primary)/35 bg-(--secondary)/35 p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-(--primary-text)">
+                <CheckCircle2
+                  className="h-5 w-5 text-(--success)"
+                  aria-hidden="true"
+                />
+                Short link created
+              </div>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <input
+                  value={shortUrl}
+                  readOnly
+                  aria-label="Created short URL"
+                  className="min-h-11 min-w-0 flex-1 rounded-xl border border-(--border) bg-(--surface) px-3 text-sm text-(--primary-text)"
+                />
+                <Button
+                  variant="secondary"
+                  onClick={() => navigator.clipboard.writeText(shortUrl)}
+                >
+                  <Copy className="h-4 w-4" aria-hidden="true" />
+                  Copy
+                </Button>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-4 text-xs">
+                <a
+                  href={shortUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 font-semibold text-(--primary-deep) hover:underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                  Open link
                 </a>
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`/dashboard/links/${result.shortID}/analytics`)
+                  }
+                  className="focus-ring inline-flex cursor-pointer items-center gap-1.5 font-semibold text-(--primary-deep) hover:underline"
+                >
+                  <QrCode className="h-3.5 w-3.5" aria-hidden="true" />
+                  View analytics
+                </button>
               </div>
             </div>
           )}
-        </div>
+        </DashboardCard>
+        <DashboardCard className="h-fit bg-(--primary) p-5 text-white sm:p-6">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+            <Sparkles className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <h2 className="mt-5 text-lg font-bold">A better link starts here</h2>
+          <p className="mt-2 text-sm leading-6 text-white/80">
+            Your links are ready to be shared, measured, and improved from one
+            calm workspace.
+          </p>
+          <ul className="mt-6 space-y-3 text-sm text-white/85">
+            <li className="flex gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-(--accent)" />
+              Track visits automatically
+            </li>
+            <li className="flex gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-(--accent)" />
+              Keep destinations organized
+            </li>
+            <li className="flex gap-2">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-(--accent)" />
+              Open analytics for every link
+            </li>
+          </ul>
+        </DashboardCard>
       </div>
     </div>
   );

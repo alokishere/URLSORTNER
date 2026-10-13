@@ -7,6 +7,26 @@
   --accent: #C8A96B;
   --primary-text: #252823;
   --secondary-text: #5F655D;
+  --surface: #fffdf8;
+  --surface-soft: #f1efe7;
+  --border: #e4e1d7;
+  --primary-deep: #5c6e58;
+  --accent-deep: #9a7639;
+  --success: #3f6b49;
+  --danger: #a84d3b;
+}
+
+:root.dim-mode {
+  --background: #242a23;
+  --surface: #2d342c;
+  --surface-soft: #384237;
+  --border: #4c584a;
+  --primary-text: #f7f4ed;
+  --secondary-text: #c5cec0;
+  --secondary: #657361;
+  --primary-deep: #c7d3c0;
+  --accent: #d7b574;
+  --accent-deep: #e4c78b;
 }
 
 :root {
@@ -24,6 +44,14 @@ body {
   min-height: 100vh;
   background: var(--background);
   color: var(--primary-text);
+}
+
+:root.dim-mode body {
+  background: var(--background);
+}
+
+#root {
+  min-height: 100vh;
 }
 
 * {
@@ -58,6 +86,54 @@ body {
   background-image: linear-gradient(rgba(143, 162, 138, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(143, 162, 138, 0.08) 1px, transparent 1px);
   background-size: 22px 22px;
+}
+
+.dashboard-app {
+  background:
+    radial-gradient(circle at 82% 3%, rgba(199, 211, 192, 0.16), transparent 26rem),
+    var(--background);
+}
+
+.dash-card {
+  border: 1px solid var(--border);
+  background: rgba(255, 253, 248, 0.82);
+  box-shadow: 0 8px 24px rgba(37, 40, 35, 0.045);
+  border-radius: 18px;
+}
+
+.dash-card-hover {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.dash-card-hover:hover {
+  transform: translateY(-1px);
+  border-color: rgba(143, 162, 138, 0.6);
+  box-shadow: 0 12px 30px rgba(37, 40, 35, 0.08);
+}
+
+.focus-ring:focus-visible {
+  outline: 3px solid rgba(200, 169, 107, 0.65);
+  outline-offset: 2px;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.dashboard-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(143, 162, 138, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 ::-webkit-scrollbar {
