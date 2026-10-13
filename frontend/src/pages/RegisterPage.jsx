@@ -55,7 +55,7 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen bg-[#F7F4ED] px-4 py-12 text-[#252823]">
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-[#C7D3C0] bg-[#F7F4ED] shadow-xl shadow-[#8FA28A]/10">
+      <div className="mx-auto max-w-5xl overflow-hidden rounded-4xl border border-[#C7D3C0] bg-[#F7F4ED] shadow-xl shadow-[#8FA28A]/10">
         <div className="grid lg:grid-cols-[1fr_1.05fr]">
           <div className="relative overflow-hidden bg-[#8FA28A] p-8 md:p-12">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.2),transparent_30%)]" />

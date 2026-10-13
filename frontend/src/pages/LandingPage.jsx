@@ -107,11 +107,11 @@ const LandingPage = () => {
             </div>
 
             <div className="relative flex justify-center lg:justify-end">
-              <div className="float-slow glass-panel relative w-full max-w-md rounded-[2rem] p-5 shadow-xl shadow-[#8FA28A]/10">
+              <div className="float-slow glass-panel relative w-full max-w-md rounded-4xl p-5 shadow-xl shadow-[#8FA28A]/10">
                 <div className="absolute -left-4 top-14 h-20 w-20 rounded-full bg-[#C8A96B]/25 blur-2xl" />
                 <div className="absolute -right-5 bottom-10 h-24 w-24 rounded-full bg-[#8FA28A]/20 blur-2xl" />
 
-                <div className="relative rounded-[1.5rem] border border-[#C7D3C0] bg-[#F7F4ED] p-5">
+                <div className="relative rounded-3xl border border-[#C7D3C0] bg-[#F7F4ED] p-5">
                   <div className="mb-5 flex items-center justify-between text-[#5F655D]">
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <div className="h-2.5 w-2.5 rounded-full bg-[#8FA28A]" />
