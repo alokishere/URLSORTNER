@@ -197,16 +197,16 @@ const CreateSortUrl = () => {
             </div>
           )}
         </DashboardCard>
-        <DashboardCard className="h-fit bg-(--primary) p-5 text-white sm:p-6">
+        <DashboardCard className="h-fit bg-(--primary) p-5 text-(--primary-text) sm:p-6">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
             <Sparkles className="h-5 w-5" aria-hidden="true" />
           </span>
           <h2 className="mt-5 text-lg font-bold">A better link starts here</h2>
-          <p className="mt-2 text-sm leading-6 text-white/80">
+          <p className="mt-2 text-sm leading-6 text-(--primary-text/80)">
             Your links are ready to be shared, measured, and improved from one
             calm workspace.
           </p>
-          <ul className="mt-6 space-y-3 text-sm text-white/85">
+          <ul className="mt-6 space-y-3 text-sm text-(--primary-text/85">
             <li className="flex gap-2">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-(--accent)" />
               Track visits automatically

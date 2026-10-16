@@ -2,23 +2,16 @@ import { useState } from "react";
 import {
   Bell,
   ChevronDown,
-  ChevronRight,
-  CircleHelp,
-  FileText,
-  Globe2,
   Home,
-  LayoutGrid,
   Link2,
   LogOut,
   Menu,
   Moon,
   Plus,
-  QrCode,
   Search,
   Settings,
   SlidersHorizontal,
   Sparkles,
-  Wrench,
   X,
 } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
@@ -31,24 +24,11 @@ const navItems = [
   { to: "/dashboard/links", label: "My Links", icon: Link2 },
   { to: "/dashboard/create", label: "Create New", icon: Plus },
   { to: "/dashboard/analytics", label: "Analytics", icon: SlidersHorizontal },
-  { to: "/dashboard/qr-codes", label: "QR Codes", icon: QrCode },
-  {
-    to: "/dashboard/bio-pages",
-    label: "Bio Pages",
-    icon: Sparkles,
-    badge: "New",
-  },
-  { to: "/dashboard/domains", label: "Custom Domains", icon: Globe2 },
-  {
-    to: "/dashboard/campaigns",
-    label: "Campaigns (UTM)",
-    icon: SlidersHorizontal,
-  },
+  { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [user, setUser] = useState(getStoredUser());
@@ -93,7 +73,7 @@ const DashboardLayout = () => {
       )}
       <aside
         className={cx(
-          "fixed inset-y-0 left-0 z-50 flex w-65 -translate-x-full flex-col border-r border-(--border) bg-(--surface) transition-transform duration-200 lg:relative lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex h-dvh max-h-dvh w-65 -translate-x-full flex-col border-r border-(--border) bg-(--surface) transition-transform duration-200 lg:sticky lg:top-0 lg:translate-x-0",
           sidebarOpen && "translate-x-0",
         )}
       >
@@ -115,13 +95,13 @@ const DashboardLayout = () => {
         </div>
         <nav
           aria-label="Dashboard navigation"
-          className="dashboard-scrollbar flex-1 overflow-y-auto px-3 py-5"
+          className="dashboard-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-5"
         >
           <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-(--secondary-text)">
             Workspace
           </p>
           <div className="space-y-1">
-            {navItems.map(({ to, label, icon: Icon, end, badge }) => (
+            {navItems.map(({ to, label, icon: Icon, end }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -131,55 +111,8 @@ const DashboardLayout = () => {
               >
                 <Icon className="h-4.5 w-4.5 shrink-0" aria-hidden="true" />
                 <span className="flex-1">{label}</span>
-                {badge && (
-                  <span className="rounded-full bg-[#f0e3c9] px-2 py-0.5 text-[10px] font-semibold text-(--accent-deep)">
-                    {badge}
-                  </span>
-                )}
               </NavLink>
             ))}
-            <div>
-              <button
-                type="button"
-                aria-expanded={toolsOpen}
-                onClick={() => setToolsOpen((open) => !open)}
-                className="focus-ring flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-xl px-3 text-sm text-(--secondary-text) transition hover:bg-(--surface-soft) hover:text-(--primary-text)"
-              >
-                <Wrench className="h-4.5 w-4.5" aria-hidden="true" />
-                <span className="flex-1 text-left">Tools</span>
-                {toolsOpen ? (
-                  <ChevronDown className="h-4 w-4" />
-                ) : (
-                  <ChevronRight className="h-4 w-4" />
-                )}
-              </button>
-              {toolsOpen && (
-                <div className="ml-8 mt-1 space-y-1 border-l border-(--border) pl-2">
-                  <NavLink
-                    to="/dashboard/tools"
-                    className="focus-ring flex min-h-10 items-center gap-2 rounded-lg px-3 text-xs text-(--secondary-text) hover:bg-(--surface-soft) hover:text-(--primary-text)"
-                  >
-                    <LayoutGrid className="h-4 w-4" aria-hidden="true" />
-                    Tool directory
-                  </NavLink>
-                  <NavLink
-                    to="/dashboard/campaigns"
-                    className="focus-ring flex min-h-10 items-center gap-2 rounded-lg px-3 text-xs text-(--secondary-text) hover:bg-(--surface-soft) hover:text-(--primary-text)"
-                  >
-                    <FileText className="h-4 w-4" aria-hidden="true" />
-                    UTM builder
-                  </NavLink>
-                </div>
-              )}
-            </div>
-            <NavLink to="/dashboard/integrations" className={navClass}>
-              <CircleHelp className="h-4.5 w-4.5" aria-hidden="true" />
-              <span>Integrations</span>
-            </NavLink>
-            <NavLink to="/dashboard/settings" className={navClass}>
-              <Settings className="h-4.5 w-4.5" aria-hidden="true" />
-              <span>Settings</span>
-            </NavLink>
           </div>
         </nav>
         <div className="border-t border-(--border) p-4">

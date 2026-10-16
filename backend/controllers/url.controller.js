@@ -1,7 +1,8 @@
 const shortid = require("shortid");
 const Url = require("../models/url.model");
+const ClickEvent = require("../models/clickEvent.model");
 const jwt = require("jsonwebtoken");
-
+const { UAParser } = require("ua-parser-js");
 
 async function getallUrls(req, res) {
   try {
@@ -32,6 +33,7 @@ async function getallUrls(req, res) {
 async function generateNewShortID(req, res) {
   try {
     const body = req.body;
+    const alias = req.body.alias;
     const token = req.cookies?.token;
 
     if (!body || !body.url) {
@@ -54,10 +56,11 @@ async function generateNewShortID(req, res) {
       return res.status(401).json({ error: "Unauthorized User" });
     }
 
-    const hostname =  req.get("host");
-       let newShortID;
+    const hostname = req.get("host");
+    let newShortID;
 
     // Keep generating until a unique ID is found
+
     while (true) {
       const id = shortid.generate().slice(0, 4);
 
@@ -89,15 +92,53 @@ async function generateNewShortID(req, res) {
 }
 
 async function getRedirectUrl(req, res) {
-  const shortID = req.params.shortID;
-  const urlEntry = await Url.findOne({ shortID: shortID });
-  if (!urlEntry) {
-    return res.status(404).json({ error: "Short ID not found" });
+  try {
+    const { shortID } = req.params;
+
+    const urlEntry = await Url.findOne({ shortID });
+
+    if (!urlEntry) {
+      return res.status(404).json({
+        error: "Short ID not found",
+      });
+    }
+
+    const userAgent = req.get("user-agent") || "";
+    const parser = new UAParser(userAgent);
+    const result = parser.getResult();
+
+    const deviceType =
+      result.device.type === "mobile" || result.device.type === "tablet"
+        ? result.device.type
+        : result.device.type
+          ? "unknown"
+          : userAgent.includes("Mobile")
+            ? "mobile"
+            : "desktop";
+
+    await ClickEvent.create({
+      urlId: urlEntry._id,
+      timestamp: new Date(),
+
+      country: "unknown",
+      region: "unknown",
+      city: "unknown",
+
+      deviceType,
+      browser: result.browser.name || "unknown",
+      os: result.os.name || "unknown",
+
+      referrer: req.get("referer") || "direct",
+    });
+
+    return res.redirect(urlEntry.redirectUrl);
+  } catch (error) {
+    console.error("Redirect error:", error);
+
+    return res.status(500).json({
+      error: "Unable to process redirect",
+    });
   }
-  const redirectUrl = urlEntry.redirectUrl;
-  urlEntry.visitHistory.push({ timestamp: Date.now() });
-  await urlEntry.save();
-  res.redirect(redirectUrl);
 }
 
 async function getAnalytics(req, res) {
@@ -119,13 +160,19 @@ async function getAnalytics(req, res) {
     const isOwner = urlEntry.createdby.toString() === userId.toString();
 
     if (!isAdmin && !isOwner) {
-      return res.status(403).json({ error: "Forbidden - You can only view analytics for URLs you created" });
+      return res
+        .status(403)
+        .json({
+          error: "Forbidden - You can only view analytics for URLs you created",
+        });
     }
 
-    const visitHistory = urlEntry.visitHistory;
+    const visitHistory = await ClickEvent.find({ urlId: urlEntry._id }).sort({
+      timestamp: -1,
+    });
     res.status(200).json({
+      visitHistory,
       totalVisits: visitHistory.length,
-      visitHistory: visitHistory,
     });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
