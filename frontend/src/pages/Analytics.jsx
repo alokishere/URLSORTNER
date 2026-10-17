@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import instance from "../axios";
-import { BarChart } from "../components/dashboard/AnalyticsWidgets";
+import { BarChart, InsightList } from "../components/dashboard/AnalyticsWidgets";
 import {
   Button,
   DashboardCard,
@@ -23,7 +23,54 @@ import {
   formatDate,
   formatRelativeTime,
   getShortUrl,
+  aggregateVisitField,
 } from "../lib/dashboardData";
+
+const getRangeDays = (range) => {
+  if (range === "Last 7 days") return 7;
+  if (range === "Last 90 days") return 90;
+  return 28;
+};
+
+const buildChartData = (visits, range) => {
+  const rangeDays = getRangeDays(range);
+  const bucketSize = rangeDays === 7 ? 1 : rangeDays === 28 ? 2 : 6;
+  const bucketCount = Math.ceil(rangeDays / bucketSize);
+  const firstDate = new Date();
+  firstDate.setHours(0, 0, 0, 0);
+  firstDate.setDate(firstDate.getDate() - rangeDays + 1);
+
+  return Array.from({ length: bucketCount }, (_, index) => {
+    const start = new Date(firstDate);
+    start.setDate(firstDate.getDate() + index * bucketSize);
+    const end = new Date(start);
+    end.setDate(start.getDate() + bucketSize);
+    const total = visits.filter((visit) => {
+      const timestamp = new Date(visit.timestamp).getTime();
+      return timestamp >= start.getTime() && timestamp < end.getTime();
+    }).length;
+
+    return {
+      label: start.toLocaleDateString("en-IN", {
+        month: "short",
+        day: "2-digit",
+      }),
+      total,
+      unique: 0,
+    };
+  });
+};
+
+const BreakdownCard = ({ icon, title, items, emptyText }) => (
+  <DashboardCard className="p-4 sm:p-5">
+    <SectionHeading icon={icon} title={title} />
+    {items.length ? (
+      <InsightList items={items} />
+    ) : (
+      <p className="mt-5 text-sm leading-6 text-(--secondary-text)">{emptyText}</p>
+    )}
+  </DashboardCard>
+);
 
 const Analytics = () => {
   const { sortid } = useParams();
@@ -38,17 +85,25 @@ const Analytics = () => {
 
   useEffect(() => {
     let active = true;
-    Promise.all([instance.get(`/urls/${sortid}/analytics`), fetchUrls().catch(() => [])])
+    Promise.all([
+      instance.get(`/urls/${sortid}/analytics`),
+      fetchUrls().catch(() => []),
+    ])
       .then(([response, urls]) => {
         if (active) {
           setResult(response.data);
-          setDestination(response.data.redirectUrl || urls.find((url) => url.shortID === sortid)?.redirectUrl || "");
+          setDestination(
+            response.data.redirectUrl ||
+              urls.find((url) => url.shortID === sortid)?.redirectUrl ||
+              "",
+          );
         }
       })
       .catch((requestError) => {
         if (active)
           setError(
             requestError.response?.data?.message ||
+              requestError.response?.data?.error ||
               "We could not load this link analytics.",
           );
       })
@@ -60,32 +115,23 @@ const Analytics = () => {
     };
   }, [sortid]);
 
-  const visits = useMemo(() => result?.visitHistory || [], [result]);
-  const latest = visits.length ? visits[visits.length - 1] : null;
-  const first = visits.length ? visits[0] : null;
+  const visits = useMemo(
+    () => (Array.isArray(result?.visitHistory) ? result.visitHistory : []),
+    [result],
+  );
+  const orderedVisits = useMemo(
+    () => [...visits].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
+    [visits],
+  );
+  const latest = orderedVisits[0] || null;
+  const first = orderedVisits[orderedVisits.length - 1] || null;
   const shortUrl = getShortUrl({ ...result, shortID: sortid });
-  const chartData = useMemo(() => {
-    const days =
-      range === "Last 7 days" ? 7 : range === "Last 90 days" ? 14 : 14;
-    const now = new Date();
-    return Array.from({ length: days }, (_, index) => {
-      const date = new Date(now);
-      date.setDate(now.getDate() - (days - 1 - index));
-      const key = date.toISOString().slice(0, 10);
-      const total = visits.filter(
-        (visit) => new Date(visit.timestamp).toISOString().slice(0, 10) === key,
-      ).length;
-      return {
-        label: date.toLocaleDateString("en-IN", {
-          month: "short",
-          day: "2-digit",
-        }),
-        total,
-        unique: 0,
-      };
-    });
-  }, [range, visits]);
-  const orderedVisits = [...visits].reverse();
+  const chartData = useMemo(() => buildChartData(visits, range), [range, visits]);
+  const countryItems = useMemo(() => aggregateVisitField(visits, "country"), [visits]);
+  const deviceItems = useMemo(() => aggregateVisitField(visits, "deviceType"), [visits]);
+  const browserItems = useMemo(() => aggregateVisitField(visits, "browser"), [visits]);
+  const osItems = useMemo(() => aggregateVisitField(visits, "os"), [visits]);
+  const referrerItems = useMemo(() => aggregateVisitField(visits, "referrer"), [visits]);
   const pagedVisits = orderedVisits.slice(
     (page - 1) * pageSize,
     page * pageSize,
@@ -160,9 +206,9 @@ const Analytics = () => {
       </DashboardCard>
       <div className="mb-4 grid gap-4 sm:grid-cols-3">
         <DashboardCard className="p-5">
-          <p className="text-sm text-(--secondary-text)">Total clicks</p>
+          <p className="text-sm text-(--secondary-text)">Total visits</p>
           <p className="mt-2 text-3xl font-bold text-(--primary-text)">
-            {result?.totalVisits ?? visits.length}
+            {Number(result?.totalVisits ?? visits.length)}
           </p>
         </DashboardCard>
         <DashboardCard className="p-5">
@@ -187,6 +233,38 @@ const Analytics = () => {
               : "No event recorded"}
           </p>
         </DashboardCard>
+      </div>
+      <div className="mb-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <BreakdownCard
+          icon={Link2}
+          title="Top countries"
+          items={countryItems}
+          emptyText="No country data in these events."
+        />
+        <BreakdownCard
+          icon={Link2}
+          title="Devices"
+          items={deviceItems}
+          emptyText="No device data in these events."
+        />
+        <BreakdownCard
+          icon={Link2}
+          title="Browsers"
+          items={browserItems}
+          emptyText="No browser data in these events."
+        />
+        <BreakdownCard
+          icon={Link2}
+          title="Operating systems"
+          items={osItems}
+          emptyText="No OS data in these events."
+        />
+        <BreakdownCard
+          icon={Link2}
+          title="Referrers"
+          items={referrerItems}
+          emptyText="No referrer data in these events."
+        />
       </div>
       <DashboardCard className="mb-4 p-4 sm:p-5">
         <SectionHeading
@@ -215,7 +293,7 @@ const Analytics = () => {
           }
         />
         {visits.length ? (
-          <BarChart data={chartData} />
+          <BarChart data={chartData} showUnique={false} />
         ) : (
           <EmptyState
             icon={BarChart3}
@@ -247,6 +325,21 @@ const Analytics = () => {
                     Time
                   </th>
                   <th className="px-4 py-3 text-[11px] font-semibold text-(--secondary-text)">
+                    Location
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-(--secondary-text)">
+                    Device
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-(--secondary-text)">
+                    Browser
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-(--secondary-text)">
+                    OS
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-(--secondary-text)">
+                    Referrer
+                  </th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-(--secondary-text)">
                     Visit ID
                   </th>
                 </tr>
@@ -268,6 +361,23 @@ const Analytics = () => {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-(--secondary-text)">
+                      {[visit.country, visit.region, visit.city]
+                        .filter((value) => value && value !== "unknown")
+                        .join(", ") || "Unknown"}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-(--secondary-text)">
+                      {visit.deviceType || "Unknown"}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-(--secondary-text)">
+                      {visit.browser || "Unknown"}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-(--secondary-text)">
+                      {visit.os || "Unknown"}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-(--secondary-text)">
+                      {visit.referrer || "Unknown"}
                     </td>
                     <td className="px-4 py-3.5 font-mono text-xs text-(--secondary-text)">
                       {visit._id || "Event ID unavailable"}

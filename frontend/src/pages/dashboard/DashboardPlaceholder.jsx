@@ -23,7 +23,7 @@ import {
   SectionHeading,
   StatusPill,
 } from "../../components/dashboard/DashboardPrimitives";
-import { fetchUrls, formatCompact, getClicks } from "../../lib/dashboardData";
+import { fetchUrlsWithAnalytics, formatCompact, getClicks } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
 
 export const PlaceholderPage = ({
@@ -96,7 +96,7 @@ export const AnalyticsOverview = () => {
   const [loadError, setLoadError] = useState("");
   useEffect(() => {
     let active = true;
-    fetchUrls()
+    fetchUrlsWithAnalytics()
       .then((data) => {
         if (active) {
           setUrls(data);

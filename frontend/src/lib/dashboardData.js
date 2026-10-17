@@ -52,10 +52,50 @@ export const fetchUrls = async () => {
   return Array.isArray(response.data) ? response.data : [];
 };
 
+export const fetchUrlAnalytics = async (shortID) => {
+  const response = await instance.get(`/urls/${shortID}/analytics`);
+  return response.data || { visitHistory: [], totalVisits: 0 };
+};
+
+export const fetchUrlsWithAnalytics = async () => {
+  const urls = await fetchUrls();
+  const analytics = await Promise.allSettled(
+    urls.map((url) => fetchUrlAnalytics(url.shortID)),
+  );
+
+  return urls.map((url, index) => {
+    const result = analytics[index];
+    const data = result.status === "fulfilled" ? result.value : null;
+    return {
+      ...url,
+      visitHistory: Array.isArray(data?.visitHistory) ? data.visitHistory : [],
+      totalVisits: Number(data?.totalVisits || 0),
+    };
+  });
+};
+
 export const flattenVisits = (urls) =>
   urls.flatMap((url) =>
     (url.visitHistory || []).map((visit) => ({ ...visit, url })),
   );
+
+export const aggregateVisitField = (visits, field) => {
+  const counts = visits.reduce((result, visit) => {
+    const rawValue = visit?.[field];
+    const value = rawValue && rawValue !== "unknown" ? rawValue : "Unknown";
+    result[value] = (result[value] || 0) + 1;
+    return result;
+  }, {});
+  const total = visits.length || 1;
+
+  return Object.entries(counts)
+    .sort(([, firstCount], [, secondCount]) => secondCount - firstCount)
+    .map(([label, count]) => ({
+      label,
+      value: String(count),
+      percent: Math.round((count / total) * 100),
+    }));
+};
 
 export const formatDate = (
   value,

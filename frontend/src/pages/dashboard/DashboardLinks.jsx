@@ -15,7 +15,7 @@ import {
   LinkRow,
   PageIntro,
 } from "../../components/dashboard/DashboardPrimitives";
-import { fetchUrls } from "../../lib/dashboardData";
+import { fetchUrlsWithAnalytics, getClicks } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
 
 const DashboardLinks = () => {
@@ -31,7 +31,7 @@ const DashboardLinks = () => {
 
   useEffect(() => {
     let active = true;
-    fetchUrls()
+    fetchUrlsWithAnalytics()
       .then((data) => {
         if (active) {
           setUrls([...data].reverse());
@@ -61,7 +61,7 @@ const DashboardLinks = () => {
     );
     return [...next].sort((a, b) =>
       sort === "clicks"
-        ? (b.visitHistory?.length || 0) - (a.visitHistory?.length || 0)
+        ? getClicks(b) - getClicks(a)
         : new Date(b.createdAt) - new Date(a.createdAt),
     );
   }, [urls, query, sort]);

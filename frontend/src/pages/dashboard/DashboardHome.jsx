@@ -16,6 +16,7 @@ import {
   BarChart,
   CountryCard,
   DeviceBrowserCard,
+  InsightList,
 } from "../../components/dashboard/AnalyticsWidgets";
 import {
   Button,
@@ -28,13 +29,14 @@ import {
   StatCard,
 } from "../../components/dashboard/DashboardPrimitives";
 import {
-  fetchUrls,
+  fetchUrlsWithAnalytics,
   flattenVisits,
   formatCompact,
   formatRelativeTime,
   getClicks,
   getDisplayName,
   getStoredUser,
+  aggregateVisitField,
 } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
 
@@ -72,7 +74,7 @@ const DashboardHome = () => {
 
   useEffect(() => {
     let active = true;
-    fetchUrls()
+    fetchUrlsWithAnalytics()
       .then((data) => {
         if (active) {
           setUrls([...data].reverse());
@@ -113,6 +115,10 @@ const DashboardHome = () => {
     .slice(0, 5);
   const recentClicks = `${formatCompact(totalClicks)} tracked visits`;
   const avgClicks = activeUrls ? Math.round(totalClicks / activeUrls) : 0;
+  const countryItems = useMemo(() => aggregateVisitField(visits, "country"), [visits]);
+  const deviceItems = useMemo(() => aggregateVisitField(visits, "deviceType"), [visits]);
+  const browserItems = useMemo(() => aggregateVisitField(visits, "browser"), [visits]);
+  const referrerItems = useMemo(() => aggregateVisitField(visits, "referrer"), [visits]);
 
   return (
     <div className="mx-auto max-w-360">
@@ -219,7 +225,7 @@ const DashboardHome = () => {
             <BarChart data={chartData} empty={!totalClicks} />
           )}
         </DashboardCard>
-        <CountryCard items={[]} loading={loading} />
+        <CountryCard items={countryItems} loading={loading} />
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.2fr)_minmax(300px,.95fr)]">
@@ -242,6 +248,8 @@ const DashboardHome = () => {
               <LoadingBlock className="h-4 w-3/5" />
               <LoadingBlock className="h-4 w-2/5" />
             </div>
+          ) : referrerItems.length ? (
+            <InsightList items={referrerItems} />
           ) : (
             <EmptyState
               icon={Zap}
@@ -251,8 +259,8 @@ const DashboardHome = () => {
           )}
         </DashboardCard>
         <DeviceBrowserCard
-          devices={[]}
-          browsers={[]}
+          devices={deviceItems}
+          browsers={browserItems}
           loading={loading}
         />
         <DashboardCard className="p-4 sm:p-5">
