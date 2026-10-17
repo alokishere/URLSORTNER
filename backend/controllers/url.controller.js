@@ -32,12 +32,23 @@ async function getallUrls(req, res) {
 
 async function generateNewShortID(req, res) {
   try {
-    const body = req.body;
-    const alias = req.body.alias;
+    const body = req.body || {};
+    const alias = typeof body.alias === "string" ? body.alias.trim() : "";
+    const title = typeof body.title === "string" ? body.title.trim() : "";
     const token = req.cookies?.token;
 
-    if (!body || !body.url) {
+    if (!body.url) {
       return res.status(400).json({ error: "URL is required" });
+    }
+
+    if (alias && !/^[A-Za-z0-9_-]{3,32}$/.test(alias)) {
+      return res.status(400).json({
+        error: "Alias must be 3-32 characters using only letters, numbers, hyphens, or underscores",
+      });
+    }
+
+    if (title.length > 120) {
+      return res.status(400).json({ error: "Title must be 120 characters or less" });
     }
 
     if (!token) {
@@ -57,26 +68,30 @@ async function generateNewShortID(req, res) {
     }
 
     const hostname = req.get("host");
-    let newShortID;
+    let newShortID = alias;
 
-    // Keep generating until a unique ID is found
-
-    while (true) {
-      const id = shortid.generate().slice(0, 4);
-
-      const existingUrl = await Url.findOne({
-        shortID: id,
-      });
-
-      if (!existingUrl) {
-        newShortID = id;
-        break;
+    if (newShortID) {
+      const existingAlias = await Url.findOne({ shortID: newShortID });
+      if (existingAlias) {
+        return res.status(409).json({ error: "That alias is already in use" });
+      }
+    } else {
+      // Keep generating until a unique ID is found.
+      while (true) {
+        const id = shortid.generate().slice(0, 4);
+        const existingUrl = await Url.findOne({ shortID: id });
+        if (!existingUrl) {
+          newShortID = id;
+          break;
+        }
       }
     }
 
     await Url.create({
       shortID: newShortID,
       redirectUrl: body.url,
+      alias: alias || undefined,
+      title,
       visitHistory: [],
       createdby: userId,
     });
@@ -84,9 +99,14 @@ async function generateNewShortID(req, res) {
     return res.status(201).json({
       shortID: newShortID,
       url: hostname + "/" + newShortID,
+      alias: alias || null,
+      title,
       createdby: userId,
     });
   } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(409).json({ error: "That alias is already in use" });
+    }
     return res.status(500).json({ error: "Internal server error" });
   }
 }

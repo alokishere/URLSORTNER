@@ -18,11 +18,13 @@ import {
   Button,
   DashboardCard,
   EmptyState,
+  LoadingBlock,
   PageIntro,
   SectionHeading,
   StatusPill,
 } from "../../components/dashboard/DashboardPrimitives";
 import { fetchUrls, formatCompact, getClicks } from "../../lib/dashboardData";
+import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
 
 export const PlaceholderPage = ({
   icon: Icon = Sparkles,
@@ -34,6 +36,8 @@ export const PlaceholderPage = ({
   actionRoute,
 }) => {
   const navigate = useNavigate();
+  const { openCreateLink } = useCreateLinkModal();
+  const isCreateAction = actionLabel?.toLowerCase().includes("create");
   return (
     <div className="mx-auto max-w-[1100px]">
       <PageIntro
@@ -43,7 +47,7 @@ export const PlaceholderPage = ({
         actions={
           actionLabel && (
             <Button
-              onClick={() => navigate(actionRoute || "/dashboard/create")}
+              onClick={() => (isCreateAction ? openCreateLink() : navigate(actionRoute || "/dashboard/create"))}
             >
               <Rocket className="h-4 w-4" aria-hidden="true" />
               {actionLabel}
@@ -86,20 +90,32 @@ export const PlaceholderPage = ({
 
 export const AnalyticsOverview = () => {
   const navigate = useNavigate();
+  const { openCreateLink, createdVersion } = useCreateLinkModal();
   const [urls, setUrls] = useState([]);
+  const [loadedVersion, setLoadedVersion] = useState(-1);
+  const [loadError, setLoadError] = useState("");
   useEffect(() => {
     let active = true;
     fetchUrls()
       .then((data) => {
-        if (active) setUrls(data);
+        if (active) {
+          setUrls(data);
+          setLoadError("");
+          setLoadedVersion(createdVersion);
+        }
       })
-      .catch(() => {
-        if (active) setUrls([]);
+      .catch((error) => {
+        if (active) {
+          setUrls([]);
+          setLoadError(error.response?.data?.message || "We could not load analytics right now.");
+          setLoadedVersion(createdVersion);
+        }
       });
     return () => {
       active = false;
     };
-  }, []);
+  }, [createdVersion]);
+  const loading = loadedVersion !== createdVersion;
   return (
     <div className="mx-auto max-w-[1100px]">
       <PageIntro
@@ -107,6 +123,11 @@ export const AnalyticsOverview = () => {
         title="Link analytics"
         description="Choose a link to inspect its recorded visit history and performance."
       />
+      {loadError && (
+        <p role="alert" className="mb-4 rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)">
+          {loadError}
+        </p>
+      )}
       <DashboardCard className="p-4 sm:p-5">
         <SectionHeading
           icon={BarChart3}
@@ -114,7 +135,20 @@ export const AnalyticsOverview = () => {
           description="Only click events returned by the current API are shown."
         />
         <div className="mt-5 divide-y divide-[var(--border)]">
-          {urls.map((url) => (
+          {loading ? (
+            <div className="space-y-4 py-3">
+              {Array.from({ length: 5 }, (_, index) => (
+                <div key={index} className="flex items-center gap-4 py-2">
+                  <LoadingBlock className="h-9 w-9" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <LoadingBlock className="h-4 w-2/5" />
+                    <LoadingBlock className="h-3 w-3/5" />
+                  </div>
+                  <LoadingBlock className="h-4 w-12" />
+                </div>
+              ))}
+            </div>
+          ) : urls.length ? urls.map((url) => (
             <button
               type="button"
               key={url._id || url.shortID}
@@ -141,15 +175,14 @@ export const AnalyticsOverview = () => {
                 <span className="text-xs text-(--secondary-text)">clicks</span>
               </span>
             </button>
-          ))}
-          {!urls.length && (
+          )) : (
             <EmptyState
               icon={BarChart3}
               title="No analytics yet"
               description="Create a link and share it to start collecting visit history."
               action={
-                <Button onClick={() => navigate("/dashboard/create")}>
-                  Create a link
+                <Button onClick={openCreateLink}>
+                  Create short URL
                 </Button>
               }
             />

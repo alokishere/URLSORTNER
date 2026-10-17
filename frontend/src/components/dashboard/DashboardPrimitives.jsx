@@ -22,6 +22,29 @@ export const DashboardCard = ({ children, className = "", ...props }) => (
   </section>
 );
 
+export const LoadingBlock = ({ className = "" }) => (
+  <div
+    aria-hidden="true"
+    className={cx("animate-pulse rounded-xl bg-(--surface-soft)", className)}
+  />
+);
+
+export const LinkTableSkeleton = ({ rows = 5 }) => (
+  <div aria-label="Loading links" className="divide-y divide-(--border)">
+    {Array.from({ length: rows }, (_, index) => (
+      <div key={index} className="flex min-w-[900px] items-center gap-4 px-4 py-4">
+        <LoadingBlock className="h-4 w-4 rounded" />
+        <LoadingBlock className="h-9 w-44" />
+        <LoadingBlock className="h-4 flex-1" />
+        <LoadingBlock className="h-4 w-12" />
+        <LoadingBlock className="h-4 w-20" />
+        <LoadingBlock className="h-6 w-16 rounded-full" />
+        <LoadingBlock className="h-9 w-28" />
+      </div>
+    ))}
+  </div>
+);
+
 export const IconButton = ({ label, children, className = "", ...props }) => (
   <button
     type="button"
@@ -179,12 +202,6 @@ export const EmptyState = ({
   </div>
 );
 
-export const DemoPill = () => (
-  <span className="rounded-full border border-[var(--accent)]/35 bg-[#f4ead7] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--accent-deep)]">
-    Preview data
-  </span>
-);
-
 export const CopyButton = ({ url }) => {
   const [copied, setCopied] = React.useState(false);
   const copy = async () => {
@@ -240,7 +257,7 @@ export const LinkRow = ({
               u.alokdev.in/{url.shortID}
             </p>
             <p className="truncate text-xs text-(--secondary-text)">
-              {url.alias || "Short link"}
+              {url.title || url.alias || "Short link"}
             </p>
           </div>
         </div>

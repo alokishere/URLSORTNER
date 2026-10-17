@@ -16,21 +16,18 @@ import {
   BarChart,
   CountryCard,
   DeviceBrowserCard,
-  DonutChart,
-  LegendList,
 } from "../../components/dashboard/AnalyticsWidgets";
 import {
   Button,
   DashboardCard,
-  DemoPill,
   EmptyState,
+  LinkTableSkeleton,
+  LoadingBlock,
   LinkRow,
   SectionHeading,
   StatCard,
 } from "../../components/dashboard/DashboardPrimitives";
 import {
-  DEMO_INSIGHTS,
-  DEMO_URLS,
   fetchUrls,
   flattenVisits,
   formatCompact,
@@ -39,8 +36,9 @@ import {
   getDisplayName,
   getStoredUser,
 } from "../../lib/dashboardData";
+import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
 
-const buildChartData = (urls, days, preview) => {
+const buildChartData = (urls, days) => {
   const now = new Date();
   const points = Array.from({ length: 14 }, (_, index) => {
     const date = new Date(now);
@@ -49,11 +47,7 @@ const buildChartData = (urls, days, preview) => {
     const matching = flattenVisits(urls).filter(
       (visit) => new Date(visit.timestamp).toISOString().slice(0, 10) === key,
     );
-    const total = preview
-      ? [320, 410, 540, 620, 510, 430, 470, 640, 720, 610, 860, 970, 820, 760][
-          index
-        ]
-      : matching.length;
+    const total = matching.length;
     return {
       label: date.toLocaleDateString("en-IN", {
         month: "short",
@@ -68,9 +62,10 @@ const buildChartData = (urls, days, preview) => {
 
 const DashboardHome = () => {
   const navigate = useNavigate();
+  const { openCreateLink, createdVersion } = useCreateLinkModal();
   const [urls, setUrls] = useState([]);
-  const [preview, setPreview] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loadedVersion, setLoadedVersion] = useState(-1);
+  const [loadError, setLoadError] = useState("");
   const [range, setRange] = useState("Last 28 days");
   const [linkSearch, setLinkSearch] = useState("");
   const user = getStoredUser();
@@ -79,28 +74,32 @@ const DashboardHome = () => {
     let active = true;
     fetchUrls()
       .then((data) => {
-        if (active) setUrls([...data].reverse());
-      })
-      .catch(() => {
         if (active) {
-          setUrls(DEMO_URLS);
-          setPreview(true);
+          setUrls([...data].reverse());
+          setLoadError("");
+          setLoadedVersion(createdVersion);
         }
       })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+      .catch((error) => {
+        if (active) {
+          setUrls([]);
+          setLoadError(error.response?.data?.message || "We could not load your links right now.");
+          setLoadedVersion(createdVersion);
+        }
+      })
     return () => {
       active = false;
     };
-  }, []);
+  }, [createdVersion]);
+
+  const loading = loadedVersion !== createdVersion;
 
   const visits = useMemo(() => flattenVisits(urls), [urls]);
   const totalClicks = urls.reduce((sum, url) => sum + getClicks(url), 0);
   const activeUrls = urls.filter((url) => getClicks(url) > 0).length;
   const chartData = useMemo(
-    () => buildChartData(urls, range, preview),
-    [urls, range, preview],
+    () => buildChartData(urls, range),
+    [urls, range],
   );
   const filteredLinks = urls
     .filter((url) =>
@@ -112,9 +111,7 @@ const DashboardHome = () => {
   const latestVisits = [...visits]
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .slice(0, 5);
-  const recentClicks = preview
-    ? "2.7K from last period"
-    : `${formatCompact(totalClicks)} tracked visits`;
+  const recentClicks = `${formatCompact(totalClicks)} tracked visits`;
   const avgClicks = activeUrls ? Math.round(totalClicks / activeUrls) : 0;
 
   return (
@@ -132,14 +129,6 @@ const DashboardHome = () => {
           <p className="mt-1.5 text-sm text-(--secondary-text) sm:text-base">
             Here&apos;s what&apos;s happening with your short links today.
           </p>
-          {preview && (
-            <div className="mt-3 inline-flex items-center gap-2">
-              <DemoPill />
-              <span className="text-xs text-(--secondary-text)">
-                The API is unavailable, so sample dashboard data is being shown.
-              </span>
-            </div>
-          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <label className="relative">
@@ -163,50 +152,44 @@ const DashboardHome = () => {
               aria-hidden="true"
             />
           </label>
-          <Button onClick={() => navigate("/dashboard/create")}>
+          <Button onClick={openCreateLink}>
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Create new link
+            Create short URL
           </Button>
         </div>
       </div>
+
+      {loadError && (
+        <p role="alert" className="mb-4 rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)">
+          {loadError}
+        </p>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           icon={Link2}
           label="Total links"
-          value={urls.length || (loading ? "—" : "0")}
-          change={preview ? "12%" : undefined}
-          helper={
-            preview
-              ? "+5 new this week"
-              : `${activeUrls} with recorded activity`
-          }
+          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : urls.length}
+          helper={loading ? <LoadingBlock className="mt-2 h-3 w-28" /> : `${activeUrls} with recorded activity`}
         />
         <StatCard
           icon={Zap}
           label="Total clicks"
-          value={formatCompact(totalClicks)}
-          change={preview ? "28%" : undefined}
+          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : formatCompact(totalClicks)}
           helper={recentClicks}
           tone="gold"
         />
         <StatCard
           icon={Users}
           label="Unique visitors"
-          value={preview ? "8.1K" : "—"}
-          change={preview ? "22%" : undefined}
-          helper={
-            preview ? "65% of total clicks" : "Not collected by current API"
-          }
+          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : "—"}
+          helper="Not collected by current API"
         />
         <StatCard
           icon={BarChart3}
           label="Avg. clicks / active link"
-          value={activeUrls ? formatCompact(avgClicks) : "—"}
-          change={preview ? "6%" : undefined}
-          helper={
-            preview ? "Across all active links" : "Derived from recorded visits"
-          }
+          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : activeUrls ? formatCompact(avgClicks) : "—"}
+          helper="Derived from recorded visits"
         />
       </div>
 
@@ -233,10 +216,10 @@ const DashboardHome = () => {
           {loading ? (
             <div className="mt-6 h-56 animate-pulse rounded-xl bg-(--surface-soft)" />
           ) : (
-            <BarChart data={chartData} empty={!totalClicks && !preview} />
+            <BarChart data={chartData} empty={!totalClicks} />
           )}
         </DashboardCard>
-        <CountryCard items={DEMO_INSIGHTS.countries} preview={!preview} />
+        <CountryCard items={[]} loading={loading} />
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.2fr)_minmax(300px,.95fr)]">
@@ -253,14 +236,11 @@ const DashboardHome = () => {
               </button>
             }
           />
-          {preview ? (
-            <div className="mt-5 flex items-center gap-5">
-              <DonutChart
-                segments={DEMO_INSIGHTS.referrers}
-                centerValue="12.4K"
-                centerLabel="Total clicks"
-              />
-              <LegendList items={DEMO_INSIGHTS.referrers.slice(0, 5)} />
+          {loading ? (
+            <div className="mt-5 space-y-4">
+              <LoadingBlock className="h-4 w-4/5" />
+              <LoadingBlock className="h-4 w-3/5" />
+              <LoadingBlock className="h-4 w-2/5" />
             </div>
           ) : (
             <EmptyState
@@ -271,9 +251,9 @@ const DashboardHome = () => {
           )}
         </DashboardCard>
         <DeviceBrowserCard
-          devices={DEMO_INSIGHTS.devices}
-          browsers={DEMO_INSIGHTS.browsers}
-          preview={preview}
+          devices={[]}
+          browsers={[]}
+          loading={loading}
         />
         <DashboardCard className="p-4 sm:p-5">
           <SectionHeading
@@ -289,13 +269,22 @@ const DashboardHome = () => {
               </button>
             }
           />
-          <div className="mt-4 divide-y divide-(--border)">
-            {(preview
-              ? DEMO_URLS.flatMap((url) =>
-                  (url.visitHistory || []).map((visit) => ({ ...visit, url })),
-                ).slice(0, 5)
-              : latestVisits
-            ).map((visit) => (
+          {loading ? (
+            <div className="mt-4 space-y-3">
+              {Array.from({ length: 4 }, (_, index) => (
+                <div key={index} className="flex items-center gap-3 py-2">
+                  <LoadingBlock className="h-7 w-7 rounded-full" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <LoadingBlock className="h-3 w-3/4" />
+                    <LoadingBlock className="h-3 w-1/2" />
+                  </div>
+                  <LoadingBlock className="h-3 w-14" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 divide-y divide-(--border)">
+            {latestVisits.map((visit) => (
               <div key={visit._id} className="flex items-center gap-3 py-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-(--secondary)/65 text-(--primary-deep)">
                   <Globe2 className="h-3.5 w-3.5" aria-hidden="true" />
@@ -313,12 +302,13 @@ const DashboardHome = () => {
                 </span>
               </div>
             ))}
-            {!preview && !latestVisits.length && (
+            {!latestVisits.length && (
               <p className="py-8 text-center text-sm text-(--secondary-text)">
                 No click activity yet.
               </p>
             )}
-          </div>
+            </div>
+          )}
         </DashboardCard>
       </div>
 
@@ -345,7 +335,7 @@ const DashboardHome = () => {
           </div>
         </div>
         {loading ? (
-          <div className="h-56 animate-pulse bg-(--surface-soft)/45" />
+          <LinkTableSkeleton rows={4} />
         ) : filteredLinks.length ? (
           <div className="dashboard-scrollbar overflow-x-auto">
             <table className="min-w-212.5 w-full text-left">
@@ -392,9 +382,9 @@ const DashboardHome = () => {
                 : "Create your first short link to start tracking clicks."
             }
             action={
-              <Button onClick={() => navigate("/dashboard/create")}>
+              <Button onClick={openCreateLink}>
                 <Plus className="h-4 w-4" aria-hidden="true" />
-                Create new link
+                Create short URL
               </Button>
             }
           />

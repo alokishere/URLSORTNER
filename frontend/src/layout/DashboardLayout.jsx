@@ -7,7 +7,6 @@ import {
   LogOut,
   Menu,
   Moon,
-  Plus,
   Search,
   Settings,
   SlidersHorizontal,
@@ -18,11 +17,11 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import instance from "../axios";
 import { getInitials, getStoredUser } from "../lib/dashboardData";
 import { cx } from "../components/dashboard/classNames";
+import CreateLinkProvider from "../components/dashboard/CreateLinkProvider";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: Home, end: true },
   { to: "/dashboard/links", label: "My Links", icon: Link2 },
-  { to: "/dashboard/create", label: "Create New", icon: Plus },
   { to: "/dashboard/analytics", label: "Analytics", icon: SlidersHorizontal },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
@@ -62,7 +61,8 @@ const DashboardLayout = () => {
     );
 
   return (
-    <div className="dashboard-app flex min-h-dvh text-(--primary-text)">
+    <CreateLinkProvider>
+      <div className="dashboard-app flex min-h-dvh text-(--primary-text)">
       {sidebarOpen && (
         <button
           type="button"
@@ -264,7 +264,8 @@ const DashboardLayout = () => {
           <Outlet />
         </main>
       </div>
-    </div>
+      </div>
+    </CreateLinkProvider>
   );
 };
 

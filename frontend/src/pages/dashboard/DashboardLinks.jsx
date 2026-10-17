@@ -11,17 +11,20 @@ import {
   Button,
   DashboardCard,
   EmptyState,
+  LinkTableSkeleton,
   LinkRow,
   PageIntro,
 } from "../../components/dashboard/DashboardPrimitives";
-import { DEMO_URLS, fetchUrls } from "../../lib/dashboardData";
+import { fetchUrls } from "../../lib/dashboardData";
+import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
 
 const DashboardLinks = () => {
   const navigate = useNavigate();
+  const { openCreateLink, createdVersion } = useCreateLinkModal();
   const [searchParams, setSearchParams] = useSearchParams();
   const [urls, setUrls] = useState([]);
-  const [preview, setPreview] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loadedVersion, setLoadedVersion] = useState(-1);
+  const [loadError, setLoadError] = useState("");
   const [selected, setSelected] = useState([]);
   const [sort, setSort] = useState("created");
   const query = searchParams.get("search") || "";
@@ -30,21 +33,25 @@ const DashboardLinks = () => {
     let active = true;
     fetchUrls()
       .then((data) => {
-        if (active) setUrls([...data].reverse());
-      })
-      .catch(() => {
         if (active) {
-          setUrls(DEMO_URLS);
-          setPreview(true);
+          setUrls([...data].reverse());
+          setLoadError("");
+          setLoadedVersion(createdVersion);
         }
       })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+      .catch((error) => {
+        if (active) {
+          setUrls([]);
+          setLoadError(error.response?.data?.message || "We could not load your links right now.");
+          setLoadedVersion(createdVersion);
+        }
+      })
     return () => {
       active = false;
     };
-  }, []);
+  }, [createdVersion]);
+
+  const loading = loadedVersion !== createdVersion;
 
   const filtered = useMemo(() => {
     const next = urls.filter((url) =>
@@ -71,15 +78,15 @@ const DashboardLinks = () => {
         title="My links"
         description="Search, organize, and measure every short link in your workspace."
         actions={
-          <Button onClick={() => navigate("/dashboard/create")}>
+          <Button onClick={openCreateLink}>
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Create new link
+            Create short URL
           </Button>
         }
       />
-      {preview && (
-        <p className="mb-4 text-xs text-(--secondary-text)">
-          Preview data is shown because the current API could not be reached.
+      {loadError && (
+        <p role="alert" className="mb-4 rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)">
+          {loadError}
         </p>
       )}
       <DashboardCard className="overflow-hidden">
@@ -144,7 +151,7 @@ const DashboardLinks = () => {
           </div>
         )}
         {loading ? (
-          <div className="h-72 animate-pulse bg-(--surface-soft)/45" />
+          <LinkTableSkeleton rows={6} />
         ) : filtered.length ? (
           <div className="dashboard-scrollbar overflow-x-auto">
             <table className="min-w-[1020px] w-full text-left">
@@ -206,9 +213,9 @@ const DashboardLinks = () => {
             title="No links match your search"
             description="Try another keyword or create a new short link."
             action={
-              <Button onClick={() => navigate("/dashboard/create")}>
+              <Button onClick={openCreateLink}>
                 <Plus className="h-4 w-4" aria-hidden="true" />
-                Create new link
+                Create short URL
               </Button>
             }
           />

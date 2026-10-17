@@ -24,15 +24,24 @@ const CreateSortUrl = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    setResult(null);
     setLoading(true);
     try {
       const form = new FormData(event.currentTarget);
-      const response = await instance.post("/urls/", { url: form.get("url") });
+      const alias = form.get("alias")?.toString().trim();
+      const title = form.get("title")?.toString().trim();
+      const response = await instance.post("/urls/", {
+        url: form.get("url"),
+        ...(alias ? { alias } : {}),
+        ...(title ? { title } : {}),
+      });
+      setError("");
       setResult(response.data);
       event.currentTarget.reset();
     } catch (requestError) {
       setError(
         requestError.response?.data?.message ||
+          requestError.response?.data?.error ||
           "We could not create that link. Check the URL and try again.",
       );
     } finally {
@@ -102,12 +111,14 @@ const CreateSortUrl = () => {
                 <input
                   id="alias"
                   name="alias"
-                  disabled
-                  placeholder="Available when supported"
-                  className="min-h-12 w-full cursor-not-allowed rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--secondary-text)"
+                  minLength="3"
+                  maxLength="32"
+                  pattern="[A-Za-z0-9_-]{3,32}"
+                  placeholder="e.g. alok-linkedin"
+                  className="focus-ring min-h-12 w-full rounded-xl border border-(--border) bg-(--surface) px-4 text-sm text-(--primary-text) placeholder:text-(--secondary-text)"
                 />
                 <p className="mt-2 text-xs text-(--secondary-text)">
-                  The current API accepts destination URLs only.
+                  Letters, numbers, hyphens, and underscores.
                 </p>
               </div>
               <div>
@@ -123,12 +134,12 @@ const CreateSortUrl = () => {
                 <input
                   id="title"
                   name="title"
-                  disabled
-                  placeholder="Available when supported"
-                  className="min-h-12 w-full cursor-not-allowed rounded-xl border border-(--border) bg-(--surface-soft) px-4 text-sm text-(--secondary-text)"
+                  maxLength="120"
+                  placeholder="e.g. LinkedIn profile"
+                  className="focus-ring min-h-12 w-full rounded-xl border border-(--border) bg-(--surface) px-4 text-sm text-(--primary-text) placeholder:text-(--secondary-text)"
                 />
                 <p className="mt-2 text-xs text-(--secondary-text)">
-                  Titles are not part of the current data model.
+                  Optional label for your workspace.
                 </p>
               </div>
             </div>

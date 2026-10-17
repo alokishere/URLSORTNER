@@ -1,5 +1,5 @@
-import { Globe2, Monitor, Smartphone, Tablet } from 'lucide-react';
-import { DashboardCard, SectionHeading } from './DashboardPrimitives';
+import { Globe2, Monitor } from 'lucide-react';
+import { DashboardCard, LoadingBlock, SectionHeading } from './DashboardPrimitives';
 import { cx } from './classNames';
 
 export const BarChart = ({ data, empty = false }) => {
@@ -73,17 +73,17 @@ export const InsightList = ({ items }) => (
   </div>
 );
 
-export const CountryCard = ({ items, preview = false }) => (
+export const CountryCard = ({ items, loading = false }) => (
   <DashboardCard className="p-4 sm:p-5">
     <SectionHeading icon={Globe2} title="Top countries" action={<button type="button" className="focus-ring min-h-9 cursor-pointer rounded-lg border border-(--border) px-3 text-xs text-(--secondary-text) hover:bg-(--surface-soft)">By clicks</button>} />
-    {preview ? <div className="mt-4 rounded-xl bg-(--surface-soft)/70 p-4 text-xs leading-5 text-(--secondary-text)">Country breakdown will appear when the API records visitor location. Preview values are shown for layout only.</div> : items.length ? <InsightList items={items} /> : <div className="mt-5 text-sm text-(--secondary-text)">No country data collected yet.</div>}
+    {loading ? <div className="mt-5 space-y-4"><LoadingBlock className="h-4 w-3/4" /><LoadingBlock className="h-4 w-2/3" /><LoadingBlock className="h-4 w-1/2" /></div> : items.length ? <InsightList items={items} /> : <div className="mt-5 text-sm leading-6 text-(--secondary-text)">No country data collected yet.</div>}
   </DashboardCard>
 );
 
-export const DeviceBrowserCard = ({ devices, browsers, preview = false }) => (
+export const DeviceBrowserCard = ({ devices, browsers, loading = false }) => (
   <DashboardCard className="p-4 sm:p-5">
     <SectionHeading icon={Monitor} title="Device & browser" />
-    {preview ? <div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-xl bg-(--surface-soft) p-3"><Smartphone className="h-4 w-4 text-(--primary-deep)" /><p className="mt-2 text-xs text-(--secondary-text)">Mobile</p><p className="text-lg font-bold text-(--primary-text)">65%</p></div><div className="rounded-xl bg-(--surface-soft) p-3"><Tablet className="h-4 w-4 text-(--primary-deep)" /><p className="mt-2 text-xs text-(--secondary-text)">Desktop</p><p className="text-lg font-bold text-(--primary-text)">26%</p></div><p className="col-span-2 text-xs leading-5 text-(--secondary-text)">Preview values only. Device and browser fields are not collected by the current API.</p></div> : <div className="mt-5"><InsightList items={devices.length ? devices : browsers} /></div>}
+    {loading ? <div className="mt-5 space-y-4"><LoadingBlock className="h-4 w-4/5" /><LoadingBlock className="h-4 w-3/5" /><LoadingBlock className="h-4 w-2/5" /></div> : devices.length || browsers.length ? <InsightList items={devices.length ? devices : browsers} /> : <div className="mt-5 text-sm leading-6 text-(--secondary-text)">No device or browser data collected yet.</div>}
   </DashboardCard>
 );
 

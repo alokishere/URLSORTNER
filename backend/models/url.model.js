@@ -16,6 +16,22 @@ const urlSchema = new mongoose.Schema(
       maxlength: 8192,
     },
 
+    alias: {
+      type: String,
+      trim: true,
+      maxlength: 32,
+      match: /^[A-Za-z0-9_-]+$/,
+      unique: true,
+      sparse: true,
+    },
+
+    title: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: "",
+    },
+
     createdby: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
