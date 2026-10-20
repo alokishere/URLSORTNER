@@ -37,7 +37,10 @@ export const LoadingBlock = ({ className = "" }) => (
 export const LinkTableSkeleton = ({ rows = 5 }) => (
   <div aria-label="Loading links" className="divide-y divide-(--border)">
     {Array.from({ length: rows }, (_, index) => (
-      <div key={index} className="flex min-w-[900px] items-center gap-4 px-4 py-4">
+      <div
+        key={index}
+        className="flex min-w-[900px] items-center gap-4 px-4 py-4"
+      >
         <LoadingBlock className="h-4 w-4 rounded" />
         <LoadingBlock className="h-9 w-44" />
         <LoadingBlock className="h-4 flex-1" />
@@ -65,12 +68,10 @@ export const IconButton = ({ label, children, className = "", ...props }) => (
   </button>
 );
 
-export const Button = React.forwardRef(function Button({
-  children,
-  variant = "primary",
-  className = "",
-  ...props
-}, ref) {
+export const Button = React.forwardRef(function Button(
+  { children, variant = "primary", className = "", ...props },
+  ref,
+) {
   const variants = {
     primary:
       "bg-(--accent) text-(--surface) shadow-sm hover:bg-[var(--accent-deep)]",
@@ -281,8 +282,17 @@ export const LinkRow = ({
     const menuWidth = 176;
     const menuHeight = 154;
     setMenuPosition({
-      left: Math.max(12, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 12)),
-      top: Math.max(12, Math.min(rect.top - menuHeight - 8, window.innerHeight - menuHeight - 12)),
+      left: Math.max(
+        12,
+        Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 12),
+      ),
+      top: Math.max(
+        12,
+        Math.min(
+          rect.top - menuHeight - 8,
+          window.innerHeight - menuHeight - 12,
+        ),
+      ),
     });
     setMenuOpen(true);
     onAction?.();
@@ -334,7 +344,9 @@ export const LinkRow = ({
         {formatDate(url.createdAt)}
       </td>
       <td className="px-3 py-3.5 sm:px-4">
-        <StatusPill tone={url.status === "active" ? "success" : "warning"}>{url.status === "active" ? "Active" : "Blocked"}</StatusPill>
+        <StatusPill tone={url.status === "active" ? "success" : "warning"}>
+          {url.status === "active" ? "Active" : "Blocked"}
+        </StatusPill>
       </td>
       <td className="w-[244px] px-2 py-3.5 align-middle sm:px-4">
         <div className="flex h-10 min-w-[220px] items-center justify-end gap-0.5 whitespace-nowrap">
@@ -359,14 +371,61 @@ export const LinkRow = ({
             <QrCode className="h-4 w-4" />
           </IconButton>
           <div>
-          <IconButton label="More link actions" aria-expanded={menuOpen} aria-haspopup="menu" onClick={toggleMenu}>
-            <MoreHorizontal className="h-4 w-4" />
-          </IconButton>
-          {menuOpen && <div ref={menuRef} role="menu" className="fixed z-70 w-44 rounded-xl border border-(--border) bg-(--surface) p-1.5 shadow-xl" style={menuPosition}>
-            <button type="button" onClick={() => { setMenuOpen(false); onEdit?.(url); }} className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-(--surface-soft)"><Pencil className="h-4 w-4" />Edit</button>
-            <button type="button" disabled={actionLoading} onClick={() => { setMenuOpen(false); onToggleStatus?.(url); }} className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-(--surface-soft) disabled:opacity-50">{url.status === "active" ? <Ban className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}{url.status === "active" ? "Block link" : "Unblock link"}</button>
-            <button type="button" onClick={() => { setMenuOpen(false); onDelete?.(url); }} className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm text-(--danger) hover:bg-[#f8e9e5]"><Trash2 className="h-4 w-4" />Delete</button>
-          </div>}
+            <IconButton
+              label="More link actions"
+              aria-expanded={menuOpen}
+              aria-haspopup="menu"
+              onClick={toggleMenu}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </IconButton>
+            {menuOpen && (
+              <div
+                ref={menuRef}
+                role="menu"
+                className="fixed z-70 w-44 rounded-xl border border-(--border) bg-(--surface) p-1.5 shadow-xl"
+                style={menuPosition}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onEdit?.(url);
+                  }}
+                  className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-(--surface-soft)"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onToggleStatus?.(url);
+                  }}
+                  className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-(--surface-soft) disabled:opacity-50"
+                >
+                  {url.status === "active" ? (
+                    <Ban className="h-4 w-4" />
+                  ) : (
+                    <RotateCcw className="h-4 w-4" />
+                  )}
+                  {url.status === "active" ? "Block link" : "Unblock link"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onDelete?.(url);
+                  }}
+                  className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm text-(--danger) hover:bg-[#f8e9e5]"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </td>
