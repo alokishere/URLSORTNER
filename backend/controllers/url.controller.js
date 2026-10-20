@@ -5,20 +5,9 @@ const { UAParser } = require("ua-parser-js");
 const QRCode = require("qrcode");
 const ClickEvent = require("../models/clickEvent.model");
 const Url = require("../models/url.model");
+const { isReservedSlug, normalizeSlug } = require("../utils/reservedSlugs");
 
 const ALIAS_PATTERN = /^[A-Za-z0-9_-]{3,32}$/;
-const RESERVED_ALIASES = new Set([
-  "admin",
-  "analytics",
-  "api",
-  "dashboard",
-  "health",
-  "login",
-  "register",
-  "status",
-  "user",
-  "urls",
-]);
 const CLAIM_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
 
 const isAdmin = (user) => Boolean(user?.roles?.includes("admin"));
@@ -48,11 +37,10 @@ function validateDestination(value) {
 
 function validateAlias(alias) {
   if (!alias) return null;
+  if (isReservedSlug(alias)) return "That alias is reserved";
   if (!ALIAS_PATTERN.test(alias)) {
     return "Alias must be 3-32 characters using only letters, numbers, hyphens, or underscores";
   }
-  if (RESERVED_ALIASES.has(alias.toLowerCase()))
-    return "That alias is reserved";
   return null;
 }
 
@@ -106,7 +94,7 @@ async function generateNewShortID(req, res) {
   try {
     const body = req.body || {};
     const destination = typeof body.url === "string" ? body.url.trim() : "";
-    const alias = typeof body.alias === "string" ? body.alias.trim() : "";
+    const alias = normalizeSlug(body.alias);
     const title = typeof body.title === "string" ? body.title.trim() : "";
     const urlError = validateDestination(destination);
     const aliasError = validateAlias(alias);
@@ -238,8 +226,7 @@ async function updateUrl(req, res) {
       updates.redirectUrl = destination;
     }
     if (Object.hasOwn(req.body || {}, "alias")) {
-      const alias =
-        typeof req.body.alias === "string" ? req.body.alias.trim() : "";
+      const alias = normalizeSlug(req.body.alias);
       const error = validateAlias(alias);
       if (error) return res.status(400).json({ error });
       const nextShortID = alias || (await generateUniqueShortID());

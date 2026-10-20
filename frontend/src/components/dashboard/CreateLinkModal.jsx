@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   CheckCircle2,
   Copy,
@@ -8,13 +8,14 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "./DashboardPrimitives";
-import { createShortUrl } from "../../lib/urlApi";
+import { createShortUrl, getRequestErrorMessage } from "../../lib/urlApi";
 
 const CreateLinkModal = ({ open, onClose, onCreated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
+  const requestInFlight = useRef(false);
 
   if (!open) return null;
 
@@ -28,32 +29,35 @@ const CreateLinkModal = ({ open, onClose, onCreated }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (requestInFlight.current) return;
     setError("");
     setResult(null);
     setCopied(false);
     setLoading(true);
+    requestInFlight.current = true;
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const alias = form.get("alias")?.toString().trim();
+    const title = form.get("title")?.toString().trim();
+    let created;
     try {
-      const form = new FormData(event.currentTarget);
-      const alias = form.get("alias")?.toString().trim();
-      const title = form.get("title")?.toString().trim();
-      const created = await createShortUrl({
+      created = await createShortUrl({
         url: form.get("url"),
         ...(alias ? { alias } : {}),
         ...(title ? { title } : {}),
       });
-      setError("");
-      setResult(created);
-      onCreated();
-      event.currentTarget.reset();
     } catch (requestError) {
-      setError(
-        requestError.response?.data?.message ||
-          requestError.response?.data?.error ||
-          "We could not create that link. Check the URL and try again.",
-      );
+      setError(getRequestErrorMessage(requestError, "We could not create that link. Check the URL and try again."));
+      return;
     } finally {
+      requestInFlight.current = false;
       setLoading(false);
     }
+
+    setError("");
+    setResult(created);
+    formElement.reset();
+    onCreated?.();
   };
 
   const shortUrl = result?.shortUrl || result?.url || "";

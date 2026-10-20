@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   CheckCircle2,
   Copy,
@@ -8,7 +8,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import instance from "../axios";
+import { createShortUrl, getRequestErrorMessage } from "../lib/urlApi";
 import {
   Button,
   DashboardCard,
@@ -20,38 +20,40 @@ const CreateSortUrl = () => {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const requestInFlight = useRef(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (requestInFlight.current) return;
     setError("");
     setResult(null);
     setLoading(true);
+    requestInFlight.current = true;
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const alias = form.get("alias")?.toString().trim();
+    const title = form.get("title")?.toString().trim();
+    let created;
     try {
-      const form = new FormData(event.currentTarget);
-      const alias = form.get("alias")?.toString().trim();
-      const title = form.get("title")?.toString().trim();
-      const response = await instance.post("/urls/", {
+      created = await createShortUrl({
         url: form.get("url"),
         ...(alias ? { alias } : {}),
         ...(title ? { title } : {}),
       });
-      setError("");
-      setResult(response.data);
-      event.currentTarget.reset();
     } catch (requestError) {
-      setError(
-        requestError.response?.data?.message ||
-          requestError.response?.data?.error ||
-          "We could not create that link. Check the URL and try again.",
-      );
+      setError(getRequestErrorMessage(requestError, "We could not create that link. Check the URL and try again."));
+      return;
     } finally {
+      requestInFlight.current = false;
       setLoading(false);
     }
+
+    setError("");
+    setResult(created);
+    formElement.reset();
   };
 
-  const shortUrl =
-    result?.url ||
-    (result?.shortID ? `${instance.defaults.baseURL}/${result.shortID}` : "");
+  const shortUrl = result?.shortUrl || result?.url || "";
 
   return (
     <div className="mx-auto max-w-245">

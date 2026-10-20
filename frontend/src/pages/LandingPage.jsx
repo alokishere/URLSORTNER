@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Reveal, Stagger, StaggerItem } from "../components/MotionPrimitives";
-import { createShortUrl } from "../lib/urlApi";
+import { createShortUrl, getRequestErrorMessage } from "../lib/urlApi";
 import {
   getGuestLinks,
   saveGuestLink,
@@ -134,25 +134,30 @@ const LandingPage = () => {
   const [guestLinks, setGuestLinks] = useState(getGuestLinks);
   const [storageError, setStorageError] = useState("");
   const [openFaq, setOpenFaq] = useState(0);
+  const requestInFlight = useRef(false);
   const shortUrl = result?.shortUrl || result?.url || "";
 
   const shortenUrl = async (event) => {
     event.preventDefault(); setError(""); setResult(null); setCopied(false);
+    if (requestInFlight.current) return;
     if (!url.trim()) { setError("Paste a URL to create a short link."); return; }
     try { new URL(url.trim()); } catch { setError("Enter a complete URL, including https://."); return; }
     setLoading(true);
+    requestInFlight.current = true;
+    let created;
     try {
-      const created = await createShortUrl({ url: url.trim() });
-      setResult(created);
-      setUrl("");
-      if (created.claimToken) {
-        const saved = saveGuestLink(created);
-        setGuestLinks(saved.links);
-        setStorageError(saved.ok ? "" : saved.error);
-      }
+      created = await createShortUrl({ url: url.trim() });
     }
-    catch (requestError) { setError(requestError.response?.data?.message || requestError.response?.data?.error || "We could not create that link. Check the URL and try again."); }
-    finally { setLoading(false); }
+    catch (requestError) { setError(getRequestErrorMessage(requestError, "We could not create that link. Check the URL and try again.")); return; }
+    finally { requestInFlight.current = false; setLoading(false); }
+    setError("");
+    setResult(created);
+    setUrl("");
+    if (created.claimToken) {
+      const saved = saveGuestLink(created);
+      setGuestLinks(saved.links);
+      setStorageError(saved.ok ? "" : saved.error);
+    }
   };
 
   const copyShortUrl = async () => {

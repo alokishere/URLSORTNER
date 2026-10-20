@@ -1,8 +1,19 @@
 import instance from "../axios";
 
+export const getRequestErrorMessage = (error, fallback) =>
+  error?.response?.data?.error ||
+  error?.response?.data?.message ||
+  error?.message ||
+  fallback;
+
 export const createShortUrl = async (payload) => {
   const response = await instance.post("/urls/", payload);
-  return response.data;
+  const created = response.data;
+  const hasShortUrl = typeof created?.shortUrl === "string" || typeof created?.url === "string";
+  if (response.status !== 201 || typeof created?.shortID !== "string" || !hasShortUrl) {
+    throw new Error("The server returned an invalid link response.");
+  }
+  return created;
 };
 
 export const claimGuestLinks = async (claims) => {
