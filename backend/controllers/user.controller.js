@@ -1,6 +1,24 @@
 const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 
+const cookieOptions = () => ({
+  httpOnly: true,
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  secure: process.env.NODE_ENV === "production",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
+
+const clearCookieOptions = () => {
+  const { maxAge, ...options } = cookieOptions();
+  void maxAge;
+  return options;
+};
+
+const issueSession = (res, user) => {
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  res.cookie("token", token, cookieOptions());
+};
+
 
 async function registerUser(req, res) {
   try {
@@ -10,6 +28,7 @@ async function registerUser(req, res) {
       return res.status(400).json({ error: "User already exists" });
     }
     const user = await User.create({ fullName, email, password });
+    issueSession(res, user);
     res.status(201).json({
       message: "User registered successfully",
       user: {
@@ -31,11 +50,13 @@ async function loginUser(req, res) {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+    if (user.isActive === false) {
+      return res.status(403).json({ error: "Account is inactive" });
+    }
     if (user.password !== password) {
       return res.status(401).json({ error: "Invalid password" });
     }
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    res.cookie("token", token); // 1 hour
+    issueSession(res, user);
     res.status(200).json({
       message: "Login successful",
       user: {
@@ -52,11 +73,24 @@ async function loginUser(req, res) {
 
 async function logoutUser(req, res) {
   try {
-    res.clearCookie("token");
+    res.clearCookie("token", clearCookieOptions());
     res.status(200).json({ message: "Logout successful" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
+}
+
+async function getSession(req, res) {
+  return res.status(200).json({
+    authenticated: true,
+    user: {
+      id: req.user._id,
+      fullName: req.user.fullName,
+      email: req.user.email,
+      roles: req.user.roles,
+      isActive: req.user.isActive,
+    },
+  });
 }
 
 async function updateUser(req, res){
@@ -118,6 +152,7 @@ module.exports = {
   registerUser,
   loginUser,
   logoutUser,
+  getSession,
   updateUser,
   deleteUser
 };

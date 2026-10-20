@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Bell,
   ChevronDown,
+  Clock3,
+  Globe2,
   Home,
   Link2,
   LogOut,
@@ -11,18 +14,22 @@ import {
   Settings,
   SlidersHorizontal,
   Sparkles,
+  QrCode,
   X,
 } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import instance from "../axios";
-import { getInitials, getStoredUser } from "../lib/dashboardData";
+import { getInitials } from "../lib/dashboardData";
 import { cx } from "../components/dashboard/classNames";
 import CreateLinkProvider from "../components/dashboard/CreateLinkProvider";
+import { useAuth } from "../auth/authStore";
 
 const navItems = [
-  { to: "/dashboard", label: "Dashboard", icon: Home, end: true },
-  { to: "/dashboard/links", label: "My Links", icon: Link2 },
+  { to: "/dashboard", label: "Overview", icon: Home, end: true },
+  { to: "/dashboard/links", label: "Links", icon: Link2 },
   { to: "/dashboard/analytics", label: "Analytics", icon: SlidersHorizontal },
+  { to: "/dashboard/domains", label: "Domains", icon: Globe2, comingSoon: true },
+  { to: "/dashboard/qr-codes", label: "QR codes", icon: QrCode, comingSoon: true },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
@@ -30,7 +37,13 @@ const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [user, setUser] = useState(getStoredUser());
+  const { user, clearSession } = useAuth();
+  const [notice, setNotice] = useState(() => {
+    const message = sessionStorage.getItem("urlsortner_auth_notice") || "";
+    sessionStorage.removeItem("urlsortner_auth_notice");
+    return message;
+  });
+  const reduceMotion = useReducedMotion();
   const navigate = useNavigate();
   const signOut = async () => {
     try {
@@ -38,8 +51,7 @@ const DashboardLayout = () => {
     } catch {
       /* local sign-out still clears the client session */
     }
-    localStorage.removeItem("user");
-    setUser(null);
+    clearSession();
     navigate("/login", { replace: true });
   };
 
@@ -101,16 +113,17 @@ const DashboardLayout = () => {
             Workspace
           </p>
           <div className="space-y-1">
-            {navItems.map(({ to, label, icon: Icon, end }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                onClick={() => setSidebarOpen(false)}
-                className={navClass}
-              >
-                <Icon className="h-4.5 w-4.5 shrink-0" aria-hidden="true" />
-                <span className="flex-1">{label}</span>
+            {navItems.map(({ to, label, icon: Icon, end, comingSoon }) => comingSoon ? (
+              <div key={to} className="group relative">
+                <button type="button" aria-disabled="true" aria-describedby={`${label}-coming-soon`} className="focus-ring flex min-h-11 w-full cursor-default items-center gap-3 rounded-xl border-l-2 border-transparent px-3 text-left text-sm text-(--secondary-text)/70">
+                  <Icon className="h-4.5 w-4.5 shrink-0" aria-hidden="true" />
+                  <span className="flex-1">{label}</span><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+                <span id={`${label}-coming-soon`} role="tooltip" className="pointer-events-none absolute bottom-full left-3 z-20 mb-1 hidden rounded-lg bg-(--primary-text) px-2.5 py-1.5 text-[10px] font-medium text-(--surface) shadow-lg group-hover:block group-focus-within:block">Coming soon</span>
+              </div>
+            ) : (
+              <NavLink key={to} to={to} end={end} onClick={() => setSidebarOpen(false)} className={navClass}>
+                <Icon className="h-4.5 w-4.5 shrink-0" aria-hidden="true" /><span className="flex-1">{label}</span>
               </NavLink>
             ))}
           </div>
@@ -126,14 +139,12 @@ const DashboardLayout = () => {
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-(--border)">
               <div className="h-full w-[12%] rounded-full bg-(--primary)" />
             </div>
-            <button
-              type="button"
-              onClick={() => navigate("/dashboard/billing")}
-              className="focus-ring mt-3 flex min-h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-(--accent) text-xs font-semibold text-(--primary-text) transition hover:bg-(--accent-deep)"
-            >
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Upgrade plan
-            </button>
+            <div className="group relative mt-3">
+              <button type="button" aria-disabled="true" aria-describedby="billing-coming-soon" className="focus-ring flex min-h-10 w-full cursor-default items-center justify-center gap-2 rounded-xl bg-(--accent)/70 text-xs font-semibold text-(--surface)">
+                <Sparkles className="h-4 w-4" aria-hidden="true" />Upgrade plan <Clock3 className="h-3.5 w-3.5" />
+              </button>
+              <span id="billing-coming-soon" role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-(--primary-text) px-2.5 py-1.5 text-[10px] font-medium text-(--surface) shadow-lg group-hover:block group-focus-within:block">Billing is coming soon</span>
+            </div>
           </div>
           <div className="mt-4 flex items-center gap-2">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-(--primary) text-xs font-bold text-white">
@@ -234,7 +245,12 @@ const DashboardLayout = () => {
                 <ChevronDown className="hidden h-4 w-4 text-(--secondary-text) sm:block" />
               </button>
               {profileOpen && (
-                <div className="absolute right-0 top-14 z-50 w-48 rounded-xl border border-(--border) bg-(--surface) p-1.5 shadow-xl">
+                <motion.div
+                  initial={reduceMotion ? false : { opacity: 0, scale: 0.96, y: -4 }}
+                  animate={reduceMotion ? undefined : { opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.16 }}
+                  className="absolute right-0 top-14 z-50 w-48 rounded-xl border border-(--border) bg-(--surface) p-1.5 shadow-xl"
+                >
                   <button
                     type="button"
                     onClick={() => navigate("/dashboard/settings")}
@@ -251,7 +267,7 @@ const DashboardLayout = () => {
                     <LogOut className="h-4 w-4" />
                     Sign out
                   </button>
-                </div>
+                </motion.div>
               )}
             </div>
           </div>
@@ -261,6 +277,7 @@ const DashboardLayout = () => {
           tabIndex="-1"
           className="dashboard-scrollbar flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8 lg:py-8"
         >
+          {notice && <div role="status" className="mx-auto mb-4 flex max-w-[1440px] items-start justify-between gap-3 rounded-xl border border-(--primary)/35 bg-(--secondary)/45 px-4 py-3 text-sm text-(--primary-text)"><span>{notice}</span><button type="button" onClick={() => setNotice("")} className="focus-ring shrink-0 cursor-pointer rounded p-1 text-(--secondary-text)" aria-label="Dismiss message"><X className="h-4 w-4" /></button></div>}
           <Outlet />
         </main>
       </div>

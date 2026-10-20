@@ -35,13 +35,30 @@ const urlSchema = new mongoose.Schema(
     createdby: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      default: null,
       index: true,
+    },
+
+    guestClaimTokenHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    guestClaimExpiresAt: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+
+    claimedAt: {
+      type: Date,
+      default: null,
     },
 
     status: {
       type: String,
-      enum: ["active", "paused"],
+      enum: ["active", "blocked", "paused"],
       default: "active",
     },
 

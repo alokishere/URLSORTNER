@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail, ArrowRight, Link2 } from "lucide-react";
 import instance from "../axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { consumePostAuthIntent, migrateGuestLinks } from "../lib/guestLinks";
+import { useAuth } from "../auth/authStore";
 
 const Loginpage = () => {
   const [email, setEmail] = useState("");
@@ -10,6 +12,8 @@ const Loginpage = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { setAuthenticatedUser } = useAuth();
 
   const validateForm = () => {
     const tempErrors = {};
@@ -32,19 +36,35 @@ const Loginpage = () => {
 
     setIsLoading(true);
 
-    instance
-      .post("/user/login", { email, password })
-      .then((response) => {
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-        navigate("/dashboard");
-      })
-      .catch((error) => {
-        console.error(
-          "Login failed:",
-          error.response ? error.response.data : error.message,
-        );
-      })
-      .finally(() => setIsLoading(false));
+    setErrors({});
+    try {
+      const response = await instance.post("/user/login", { email, password });
+      setAuthenticatedUser(response.data.user);
+      try {
+        const migration = await migrateGuestLinks();
+        if (migration.claimed?.length) {
+          sessionStorage.setItem("urlsortner_auth_notice", `${migration.claimed.length} guest link${migration.claimed.length === 1 ? "" : "s"} added to your dashboard.`);
+        }
+        if (migration.failed?.length) {
+          sessionStorage.setItem("urlsortner_auth_notice", `${migration.failed.length} guest link${migration.failed.length === 1 ? "" : "s"} could not be migrated and remain saved in this browser.`);
+        }
+      } catch {
+        sessionStorage.setItem("urlsortner_auth_notice", "Your guest links could not be migrated yet. They remain saved in this browser so you can retry later.");
+      }
+      const intent = consumePostAuthIntent();
+      const requested = searchParams.get("next");
+      const safeRequested = requested?.startsWith("/dashboard") ? requested : null;
+      const intentPath = intent?.type === "analytics" && intent.shortID
+        ? `/dashboard/links/${encodeURIComponent(intent.shortID)}/analytics`
+        : intent?.type === "qr" && intent.shortID
+          ? `/dashboard/links?qr=${encodeURIComponent(intent.shortID)}`
+          : null;
+      navigate(safeRequested || intentPath || "/dashboard", { replace: true });
+    } catch (error) {
+      setErrors({ form: error.response?.data?.error || "Sign in failed. Check your email and password." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -99,13 +119,16 @@ const Loginpage = () => {
             </div>
 
             <form className="space-y-5" onSubmit={handleSubmit}>
+              {errors.form && <p role="alert" className="rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-[#8b3a2b]">{errors.form}</p>}
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#252823]">
+                <label htmlFor="login-email" className="mb-2 block text-sm font-medium text-[#252823]">
                   Email
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3.5 h-5 w-5 text-[#5F655D]" />
                   <input
+                    id="login-email"
+                    autoComplete="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -119,12 +142,14 @@ const Loginpage = () => {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#252823]">
+                <label htmlFor="login-password" className="mb-2 block text-sm font-medium text-[#252823]">
                   Password
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3.5 h-5 w-5 text-[#5F655D]" />
                   <input
+                    id="login-password"
+                    autoComplete="current-password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -133,6 +158,7 @@ const Loginpage = () => {
                   />
                   <button
                     type="button"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-3.5 text-[#5F655D] transition hover:text-[#252823]"
                   >
@@ -163,7 +189,7 @@ const Loginpage = () => {
             <p className="mt-6 text-center text-sm text-[#5F655D]">
               Don’t have an account?{" "}
               <Link
-                to="/register"
+                to={`/register${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
                 className="font-semibold text-[#8FA28A] hover:text-[#74876f]"
               >
                 Create one

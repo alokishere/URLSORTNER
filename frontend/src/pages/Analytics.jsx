@@ -397,7 +397,7 @@ const Analytics = () => {
         <div className="flex items-center justify-between border-t border-(--border) px-4 py-3 text-xs text-(--secondary-text)">
           <span>
             {orderedVisits.length
-              ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, orderedVisits.length)} of ${orderedVisits.length}`
+              ? `${(page - 1) * pageSize + 1}-${Math.min(page * pageSize, orderedVisits.length)} of ${orderedVisits.length}`
               : "0 visits"}
           </span>
           <div className="flex gap-2">

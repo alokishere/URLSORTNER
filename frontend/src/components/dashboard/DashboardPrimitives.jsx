@@ -1,11 +1,16 @@
 import React from "react";
 import {
   ArrowUpRight,
+  Ban,
   Check,
   Copy,
   ExternalLink,
   Link2,
   MoreHorizontal,
+  Pencil,
+  QrCode,
+  RotateCcw,
+  Trash2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -60,15 +65,15 @@ export const IconButton = ({ label, children, className = "", ...props }) => (
   </button>
 );
 
-export const Button = ({
+export const Button = React.forwardRef(function Button({
   children,
   variant = "primary",
   className = "",
   ...props
-}) => {
+}, ref) {
   const variants = {
     primary:
-      "bg-(--accent) text-(--primary-text) shadow-sm hover:bg-[var(--accent-deep)]",
+      "bg-(--accent) text-(--surface) shadow-sm hover:bg-[var(--accent-deep)]",
     secondary:
       "border border-(--border) bg-(--surface) text-(--primary-text) hover:border-[var(--primary)] hover:bg-(--surface-soft)",
     quiet:
@@ -76,6 +81,7 @@ export const Button = ({
   };
   return (
     <button
+      ref={ref}
       type="button"
       className={cx(
         "focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50",
@@ -87,7 +93,7 @@ export const Button = ({
       {children}
     </button>
   );
-};
+});
 
 export const PageIntro = ({ eyebrow, title, description, actions }) => (
   <div className="mb-6 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
@@ -177,10 +183,10 @@ export const StatCard = ({
       )}
     </div>
     <p className="mt-4 text-sm text-(--secondary-text)">{label}</p>
-    <p className="mt-1 text-[2rem] font-bold tracking-[-0.04em] text-(--primary-text)">
+    <div className="mt-1 text-[2rem] font-bold tracking-[-0.04em] text-(--primary-text)">
       {value}
-    </p>
-    <p className="mt-1 text-xs text-(--secondary-text)">{helper}</p>
+    </div>
+    <div className="mt-1 text-xs text-(--secondary-text)">{helper}</div>
   </DashboardCard>
 );
 
@@ -230,7 +236,13 @@ export const LinkRow = ({
   checked = false,
   onCheck,
   onAction,
+  onEdit,
+  onToggleStatus,
+  onDelete,
+  onQr,
+  actionLoading = false,
 }) => {
+  const [menuOpen, setMenuOpen] = React.useState(false);
   const navigate = useNavigate();
   const shortUrl = getShortUrl(url);
   const clicks = getClicks(url);
@@ -280,7 +292,7 @@ export const LinkRow = ({
         {formatDate(url.createdAt)}
       </td>
       <td className="px-3 py-3.5 sm:px-4">
-        <StatusPill />
+        <StatusPill tone={url.status === "active" ? "success" : "warning"}>{url.status === "active" ? "Active" : "Blocked"}</StatusPill>
       </td>
       <td className="px-2 py-3.5 sm:px-4">
         <div className="flex items-center justify-end gap-0.5">
@@ -301,9 +313,19 @@ export const LinkRow = ({
           >
             <ArrowUpRight className="h-4 w-4" />
           </IconButton>
-          <IconButton label="More link actions" onClick={onAction}>
+          <IconButton label="Generate QR code" onClick={() => onQr?.(url)}>
+            <QrCode className="h-4 w-4" />
+          </IconButton>
+          <div className="relative">
+          <IconButton label="More link actions" aria-expanded={menuOpen} onClick={() => { setMenuOpen((open) => !open); onAction?.(); }}>
             <MoreHorizontal className="h-4 w-4" />
           </IconButton>
+          {menuOpen && <div className="absolute right-0 top-11 z-20 w-44 rounded-xl border border-(--border) bg-(--surface) p-1.5 shadow-xl">
+            <button type="button" onClick={() => { setMenuOpen(false); onEdit?.(url); }} className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-(--surface-soft)"><Pencil className="h-4 w-4" />Edit</button>
+            <button type="button" disabled={actionLoading} onClick={() => { setMenuOpen(false); onToggleStatus?.(url); }} className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-(--surface-soft) disabled:opacity-50">{url.status === "active" ? <Ban className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}{url.status === "active" ? "Block link" : "Unblock link"}</button>
+            <button type="button" onClick={() => { setMenuOpen(false); onDelete?.(url); }} className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm text-(--danger) hover:bg-[#f8e9e5]"><Trash2 className="h-4 w-4" />Delete</button>
+          </div>}
+          </div>
         </div>
       </td>
     </tr>

@@ -10,6 +10,7 @@ const { getRedirectUrl } = require("./controllers/url.controller");
 
 const app = express();
 const port = process.env.PORT || 3000;
+app.set("trust proxy", 1);
 
 
 //cores
@@ -17,6 +18,7 @@ const corsOptions = {
   origin: [
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
     "https://alokurl.vercel.app",
     "https://urlview.vercel.app",
     "https://u.alokdev.in",
@@ -61,8 +63,3 @@ connectDB()
     console.error("Failed to start server:", error);
     process.exit(1);
   });
-
-
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});

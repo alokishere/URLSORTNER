@@ -39,6 +39,7 @@ import {
   aggregateVisitField,
 } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
+import { Reveal, Stagger, StaggerItem } from "../../components/MotionPrimitives";
 
 const buildChartData = (urls, days) => {
   const now = new Date();
@@ -77,7 +78,7 @@ const DashboardHome = () => {
     fetchUrlsWithAnalytics()
       .then((data) => {
         if (active) {
-          setUrls([...data].reverse());
+          setUrls(data);
           setLoadError("");
           setLoadedVersion(createdVersion);
         }
@@ -98,7 +99,7 @@ const DashboardHome = () => {
 
   const visits = useMemo(() => flattenVisits(urls), [urls]);
   const totalClicks = urls.reduce((sum, url) => sum + getClicks(url), 0);
-  const activeUrls = urls.filter((url) => getClicks(url) > 0).length;
+  const activeUrls = urls.filter((url) => url.status === "active").length;
   const chartData = useMemo(
     () => buildChartData(urls, range),
     [urls, range],
@@ -122,15 +123,12 @@ const DashboardHome = () => {
 
   return (
     <div className="mx-auto max-w-360">
-      <div className="mb-7 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+      <Reveal className="mb-7 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-[2rem] font-bold tracking-[-0.045em] text-(--primary-text) sm:text-[2.45rem]">
               Welcome back, {getDisplayName(user)}
             </h1>
-            <span className="text-2xl" aria-hidden="true">
-              👋
-            </span>
           </div>
           <p className="mt-1.5 text-sm text-(--secondary-text) sm:text-base">
             Here&apos;s what&apos;s happening with your short links today.
@@ -163,7 +161,7 @@ const DashboardHome = () => {
             Create short URL
           </Button>
         </div>
-      </div>
+      </Reveal>
 
       {loadError && (
         <p role="alert" className="mb-4 rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)">
@@ -171,35 +169,35 @@ const DashboardHome = () => {
         </p>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
+      <Stagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StaggerItem><StatCard
           icon={Link2}
           label="Total links"
           value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : urls.length}
-          helper={loading ? <LoadingBlock className="mt-2 h-3 w-28" /> : `${activeUrls} with recorded activity`}
-        />
-        <StatCard
+          helper={loading ? <LoadingBlock className="mt-2 h-3 w-28" /> : `${activeUrls} currently active`}
+        /></StaggerItem>
+        <StaggerItem><StatCard
           icon={Zap}
           label="Total clicks"
           value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : formatCompact(totalClicks)}
           helper={recentClicks}
           tone="gold"
-        />
-        <StatCard
+        /></StaggerItem>
+        <StaggerItem><StatCard
           icon={Users}
           label="Unique visitors"
-          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : "—"}
+          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : "Not available"}
           helper="Not collected by current API"
-        />
-        <StatCard
+        /></StaggerItem>
+        <StaggerItem><StatCard
           icon={BarChart3}
           label="Avg. clicks / active link"
-          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : activeUrls ? formatCompact(avgClicks) : "—"}
+          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : activeUrls ? formatCompact(avgClicks) : "Not available"}
           helper="Derived from recorded visits"
-        />
-      </div>
+        /></StaggerItem>
+      </Stagger>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,.95fr)]">
+      <Reveal delay={0.05} className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,.95fr)]">
         <DashboardCard className="p-4 sm:p-5">
           <SectionHeading
             icon={BarChart3}
@@ -226,9 +224,9 @@ const DashboardHome = () => {
           )}
         </DashboardCard>
         <CountryCard items={countryItems} loading={loading} />
-      </div>
+      </Reveal>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.2fr)_minmax(300px,.95fr)]">
+      <Reveal delay={0.08} className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.2fr)_minmax(300px,.95fr)]">
         <DashboardCard className="p-4 sm:p-5">
           <SectionHeading
             icon={Zap}
@@ -318,7 +316,7 @@ const DashboardHome = () => {
             </div>
           )}
         </DashboardCard>
-      </div>
+      </Reveal>
 
       <DashboardCard className="mt-4 overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-(--border) p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">

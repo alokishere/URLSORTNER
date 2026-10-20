@@ -101,12 +101,12 @@ export const formatDate = (
   value,
   options = { day: "2-digit", month: "short", year: "numeric" },
 ) => {
-  if (!value) return "—";
+  if (!value) return "Not available";
   return new Date(value).toLocaleDateString("en-IN", options);
 };
 
 export const formatRelativeTime = (value) => {
-  if (!value) return "—";
+  if (!value) return "Not available";
   const minutes = Math.max(
     1,
     Math.round((Date.now() - new Date(value).getTime()) / 60000),

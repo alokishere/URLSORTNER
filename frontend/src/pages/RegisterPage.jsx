@@ -8,8 +8,10 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import instance from "../axios";
+import { consumePostAuthIntent, migrateGuestLinks } from "../lib/guestLinks";
+import { useAuth } from "../auth/authStore";
 
 const RegisterPage = () => {
   const [fullName, setFullName] = useState("");
@@ -19,6 +21,8 @@ const RegisterPage = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { setAuthenticatedUser } = useAuth();
 
   const validateForm = () => {
     const tempErrors = {};
@@ -45,23 +49,39 @@ const RegisterPage = () => {
 
     setIsLoading(true);
 
-    instance
-      .post("/user/register", { fullName, email, password })
-      .then((response) => {
-        if (response.data?.user) {
-          localStorage.setItem("user", JSON.stringify(response.data.user));
-          navigate("/dashboard");
-          return;
-        }
+    setErrors({});
+    try {
+      const response = await instance.post("/user/register", { fullName, email, password });
+      if (!response.data?.user) {
         navigate("/login");
-      })
-      .catch((error) => {
-        console.error(
-          "Registration failed:",
-          error.response ? error.response.data : error.message,
-        );
-      })
-      .finally(() => setIsLoading(false));
+        return;
+      }
+      setAuthenticatedUser(response.data.user);
+      try {
+        const migration = await migrateGuestLinks();
+        if (migration.claimed?.length) {
+          sessionStorage.setItem("urlsortner_auth_notice", `${migration.claimed.length} guest link${migration.claimed.length === 1 ? "" : "s"} added to your new account.`);
+        }
+        if (migration.failed?.length) {
+          sessionStorage.setItem("urlsortner_auth_notice", `${migration.failed.length} guest link${migration.failed.length === 1 ? "" : "s"} could not be migrated and remain saved in this browser.`);
+        }
+      } catch {
+        sessionStorage.setItem("urlsortner_auth_notice", "Your guest links could not be migrated yet. They remain saved in this browser so you can retry later.");
+      }
+      const intent = consumePostAuthIntent();
+      const requested = searchParams.get("next");
+      const safeRequested = requested?.startsWith("/dashboard") ? requested : null;
+      const intentPath = intent?.type === "analytics" && intent.shortID
+        ? `/dashboard/links/${encodeURIComponent(intent.shortID)}/analytics`
+        : intent?.type === "qr" && intent.shortID
+          ? `/dashboard/links?qr=${encodeURIComponent(intent.shortID)}`
+          : null;
+      navigate(safeRequested || intentPath || "/dashboard", { replace: true });
+    } catch (error) {
+      setErrors({ form: error.response?.data?.error || "Account creation failed. Please try again." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -121,13 +141,16 @@ const RegisterPage = () => {
               </div>
 
               <form className="space-y-5" onSubmit={handleSubmit}>
+                {errors.form && <p role="alert" className="rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-[#8b3a2b]">{errors.form}</p>}
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-[#252823]">
+                  <label htmlFor="register-name" className="mb-2 block text-sm font-medium text-[#252823]">
                     Full name
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-3.5 h-5 w-5 text-[#5F655D]" />
                     <input
+                      id="register-name"
+                      autoComplete="name"
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
@@ -143,12 +166,14 @@ const RegisterPage = () => {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-[#252823]">
+                  <label htmlFor="register-email" className="mb-2 block text-sm font-medium text-[#252823]">
                     Email
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3.5 h-5 w-5 text-[#5F655D]" />
                     <input
+                      id="register-email"
+                      autoComplete="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -164,12 +189,14 @@ const RegisterPage = () => {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-[#252823]">
+                  <label htmlFor="register-password" className="mb-2 block text-sm font-medium text-[#252823]">
                     Password
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3.5 h-5 w-5 text-[#5F655D]" />
                     <input
+                      id="register-password"
+                      autoComplete="new-password"
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -178,6 +205,7 @@ const RegisterPage = () => {
                     />
                     <button
                       type="button"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-3.5 text-[#5F655D] transition hover:text-[#252823]"
                     >
@@ -208,7 +236,7 @@ const RegisterPage = () => {
               <p className="mt-6 text-center text-sm text-[#5F655D]">
                 Already have an account?{" "}
                 <Link
-                  to="/login"
+                  to={`/login${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
                   className="font-semibold text-[#8FA28A] hover:text-[#74876f]"
                 >
                   Sign in

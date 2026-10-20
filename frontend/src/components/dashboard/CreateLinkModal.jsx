@@ -7,8 +7,8 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import instance from "../../axios";
 import { Button } from "./DashboardPrimitives";
+import { createShortUrl } from "../../lib/urlApi";
 
 const CreateLinkModal = ({ open, onClose, onCreated }) => {
   const [loading, setLoading] = useState(false);
@@ -36,13 +36,13 @@ const CreateLinkModal = ({ open, onClose, onCreated }) => {
       const form = new FormData(event.currentTarget);
       const alias = form.get("alias")?.toString().trim();
       const title = form.get("title")?.toString().trim();
-      const response = await instance.post("/urls/", {
+      const created = await createShortUrl({
         url: form.get("url"),
         ...(alias ? { alias } : {}),
         ...(title ? { title } : {}),
       });
       setError("");
-      setResult(response.data);
+      setResult(created);
       onCreated();
       event.currentTarget.reset();
     } catch (requestError) {
@@ -56,9 +56,7 @@ const CreateLinkModal = ({ open, onClose, onCreated }) => {
     }
   };
 
-  const shortUrl =
-    result?.url ||
-    (result?.shortID ? `${instance.defaults.baseURL}/${result.shortID}` : "");
+  const shortUrl = result?.shortUrl || result?.url || "";
 
   const copyShortUrl = async () => {
     try {

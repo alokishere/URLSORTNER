@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDownUp,
   Filter,
@@ -6,7 +6,7 @@ import {
   Search,
   SlidersHorizontal,
 } from "lucide-react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   Button,
   DashboardCard,
@@ -15,11 +15,13 @@ import {
   LinkRow,
   PageIntro,
 } from "../../components/dashboard/DashboardPrimitives";
+import { DeleteLinkDialog, EditLinkDialog } from "../../components/dashboard/LinkManagementDialogs";
 import { fetchUrlsWithAnalytics, getClicks } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
+import { deleteShortUrl, updateShortUrl, updateShortUrlStatus } from "../../lib/urlApi";
+import QRCodeModal from "../../components/QRCodeModal";
 
 const DashboardLinks = () => {
-  const navigate = useNavigate();
   const { openCreateLink, createdVersion } = useCreateLinkModal();
   const [searchParams, setSearchParams] = useSearchParams();
   const [urls, setUrls] = useState([]);
@@ -27,6 +29,14 @@ const DashboardLinks = () => {
   const [loadError, setLoadError] = useState("");
   const [selected, setSelected] = useState([]);
   const [sort, setSort] = useState("created");
+  const [status, setStatus] = useState("all");
+  const [editing, setEditing] = useState(null);
+  const [deleting, setDeleting] = useState(null);
+  const [mutationId, setMutationId] = useState("");
+  const [mutationError, setMutationError] = useState("");
+  const [toast, setToast] = useState("");
+  const [qrLink, setQrLink] = useState(null);
+  const initialRequestedQr = useRef(searchParams.get("qr") || "");
   const query = searchParams.get("search") || "";
 
   useEffect(() => {
@@ -34,9 +44,18 @@ const DashboardLinks = () => {
     fetchUrlsWithAnalytics()
       .then((data) => {
         if (active) {
-          setUrls([...data].reverse());
+          setUrls(data);
           setLoadError("");
           setLoadedVersion(createdVersion);
+          if (initialRequestedQr.current) {
+            const requestedLink = data.find((item) => item.shortID === initialRequestedQr.current);
+            if (requestedLink) {
+              setQrLink(requestedLink);
+            } else {
+              setToast("That link is not available in your workspace.");
+            }
+            initialRequestedQr.current = "";
+          }
         }
       })
       .catch((error) => {
@@ -54,22 +73,84 @@ const DashboardLinks = () => {
   const loading = loadedVersion !== createdVersion;
 
   const filtered = useMemo(() => {
-    const next = urls.filter((url) =>
-      `${url.shortID} ${url.redirectUrl}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
-    );
+    const next = urls.filter((url) => {
+      const matchesQuery = `${url.shortID} ${url.alias || ""} ${url.title || ""} ${url.redirectUrl}`.toLowerCase().includes(query.toLowerCase());
+      const normalizedStatus = url.status === "active" ? "active" : "blocked";
+      return matchesQuery && (status === "all" || normalizedStatus === status);
+    });
     return [...next].sort((a, b) =>
       sort === "clicks"
         ? getClicks(b) - getClicks(a)
         : new Date(b.createdAt) - new Date(a.createdAt),
     );
-  }, [urls, query, sort]);
+  }, [urls, query, sort, status]);
+
+  const announce = (message) => {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 2600);
+  };
+
+  const saveEdit = async (payload) => {
+    if (!editing) return;
+    setMutationId(editing._id);
+    setMutationError("");
+    try {
+      const updated = await updateShortUrl(editing._id, payload);
+      setUrls((current) => current.map((item) => item._id === editing._id ? { ...item, ...updated } : item));
+      setEditing(null);
+      announce("Link updated successfully.");
+    } catch (error) {
+      setMutationError(error.response?.data?.error || "The link could not be updated.");
+    } finally {
+      setMutationId("");
+    }
+  };
+
+  const toggleStatus = async (link) => {
+    setMutationId(link._id);
+    setMutationError("");
+    const nextStatus = link.status === "active" ? "blocked" : "active";
+    try {
+      const updated = await updateShortUrlStatus(link._id, nextStatus);
+      setUrls((current) => current.map((item) => item._id === link._id ? { ...item, ...updated } : item));
+      announce(nextStatus === "active" ? "Link unblocked." : "Link blocked. Redirects are now disabled.");
+    } catch (error) {
+      announce(error.response?.data?.error || "The link status could not be changed.");
+    } finally {
+      setMutationId("");
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setMutationId(deleting._id);
+    setMutationError("");
+    try {
+      await deleteShortUrl(deleting._id);
+      setUrls((current) => current.filter((item) => item._id !== deleting._id));
+      setSelected((current) => current.filter((id) => id !== deleting._id));
+      setDeleting(null);
+      announce("Link deleted successfully.");
+    } catch (error) {
+      setMutationError(error.response?.data?.error || "The link could not be deleted.");
+    } finally {
+      setMutationId("");
+    }
+  };
 
   const allSelected =
     filtered.length > 0 && filtered.every((url) => selected.includes(url._id));
   const toggleAll = () =>
     setSelected(allSelected ? [] : filtered.map((url) => url._id));
+
+  const closeQrModal = useCallback(() => {
+    setQrLink(null);
+    if (searchParams.has("qr")) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("qr");
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   return (
     <div className="mx-auto max-w-[1440px]">
@@ -89,6 +170,7 @@ const DashboardLinks = () => {
           {loadError}
         </p>
       )}
+      {toast && <div role="status" className="fixed bottom-5 right-5 z-70 max-w-sm rounded-xl border border-(--border) bg-(--primary-text) px-4 py-3 text-sm font-medium text-(--surface) shadow-xl">{toast}</div>}
       <DashboardCard className="overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-(--border) p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <div className="flex flex-wrap items-center gap-2">
@@ -109,10 +191,7 @@ const DashboardLinks = () => {
                 className="focus-ring min-h-11 w-64 rounded-xl border border-(--border) bg-(--surface) pl-9 pr-3 text-sm text-(--primary-text) placeholder:text-(--secondary-text)"
               />
             </label>
-            <Button variant="secondary">
-              <Filter className="h-4 w-4" aria-hidden="true" />
-              Filters
-            </Button>
+            <label className="relative"><span className="sr-only">Filter by status</span><Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--secondary-text)" /><select value={status} onChange={(event) => setStatus(event.target.value)} className="focus-ring min-h-11 cursor-pointer appearance-none rounded-xl border border-(--border) bg-(--surface) py-2 pl-9 pr-8 text-sm"><option value="all">All statuses</option><option value="active">Active</option><option value="blocked">Blocked</option></select></label>
           </div>
           <div className="flex items-center gap-2">
             <label className="relative">
@@ -200,9 +279,11 @@ const DashboardLinks = () => {
                           : [...current, url._id],
                       )
                     }
-                    onAction={() =>
-                      navigate(`/dashboard/links/${url.shortID}/analytics`)
-                    }
+                    onEdit={(link) => { setMutationError(""); setEditing(link); }}
+                    onQr={setQrLink}
+                    onToggleStatus={toggleStatus}
+                    onDelete={(link) => { setMutationError(""); setDeleting(link); }}
+                    actionLoading={mutationId === url._id}
                   />
                 ))}
               </tbody>
@@ -221,6 +302,9 @@ const DashboardLinks = () => {
           />
         )}
       </DashboardCard>
+      <EditLinkDialog link={editing} onClose={() => !mutationId && setEditing(null)} onSave={saveEdit} saving={Boolean(editing && mutationId === editing._id)} error={editing ? mutationError : ""} />
+      <DeleteLinkDialog link={deleting} onClose={() => !mutationId && setDeleting(null)} onConfirm={confirmDelete} deleting={Boolean(deleting && mutationId === deleting._id)} error={deleting ? mutationError : ""} />
+      <QRCodeModal key={qrLink?._id || "closed-qr"} link={qrLink} onClose={closeQrModal} />
     </div>
   );
 };
