@@ -16,10 +16,10 @@ import {
   CampaignsPage,
   DomainsPage,
   IntegrationsPage,
-  NotificationsPage,
-  QRCodePage,
   ToolsPage,
 } from "../pages/dashboard/DashboardPlaceholder";
+import NotificationsPage from "../pages/dashboard/NotificationsPage";
+import QRCodePage from "../pages/dashboard/QRCodePage";
 import ProfilePage from "../pages/dashboard/ProfilePage";
 import SettingsPage from "../pages/dashboard/SettingsPage";
 

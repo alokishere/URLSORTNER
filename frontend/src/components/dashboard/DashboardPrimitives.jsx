@@ -243,9 +243,51 @@ export const LinkRow = ({
   actionLoading = false,
 }) => {
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [menuPosition, setMenuPosition] = React.useState(null);
+  const menuRef = React.useRef(null);
   const navigate = useNavigate();
   const shortUrl = getShortUrl(url);
   const clicks = getClicks(url);
+
+  React.useEffect(() => {
+    if (!menuOpen) return undefined;
+
+    const closeMenu = (event) => {
+      if (!menuRef.current?.contains(event.target)) setMenuOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    const closeForViewportChange = () => setMenuOpen(false);
+
+    document.addEventListener("pointerdown", closeMenu);
+    document.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("resize", closeForViewportChange);
+    window.addEventListener("scroll", closeForViewportChange, true);
+    return () => {
+      document.removeEventListener("pointerdown", closeMenu);
+      document.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("resize", closeForViewportChange);
+      window.removeEventListener("scroll", closeForViewportChange, true);
+    };
+  }, [menuOpen]);
+
+  const toggleMenu = (event) => {
+    if (menuOpen) {
+      setMenuOpen(false);
+      return;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    const menuWidth = 176;
+    const menuHeight = 154;
+    setMenuPosition({
+      left: Math.max(12, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 12)),
+      top: Math.max(12, Math.min(rect.top - menuHeight - 8, window.innerHeight - menuHeight - 12)),
+    });
+    setMenuOpen(true);
+    onAction?.();
+  };
+
   return (
     <tr className="border-t border-(--border) transition hover:bg-(--surface-soft)/55">
       <td className="w-10 px-3 py-3.5 sm:px-4">
@@ -294,8 +336,8 @@ export const LinkRow = ({
       <td className="px-3 py-3.5 sm:px-4">
         <StatusPill tone={url.status === "active" ? "success" : "warning"}>{url.status === "active" ? "Active" : "Blocked"}</StatusPill>
       </td>
-      <td className="px-2 py-3.5 sm:px-4">
-        <div className="flex items-center justify-end gap-0.5">
+      <td className="w-[244px] px-2 py-3.5 align-middle sm:px-4">
+        <div className="flex h-10 min-w-[220px] items-center justify-end gap-0.5 whitespace-nowrap">
           <CopyButton url={shortUrl} />
           <IconButton
             label="Open short link"
@@ -316,11 +358,11 @@ export const LinkRow = ({
           <IconButton label="Generate QR code" onClick={() => onQr?.(url)}>
             <QrCode className="h-4 w-4" />
           </IconButton>
-          <div className="relative">
-          <IconButton label="More link actions" aria-expanded={menuOpen} onClick={() => { setMenuOpen((open) => !open); onAction?.(); }}>
+          <div>
+          <IconButton label="More link actions" aria-expanded={menuOpen} aria-haspopup="menu" onClick={toggleMenu}>
             <MoreHorizontal className="h-4 w-4" />
           </IconButton>
-          {menuOpen && <div className="absolute right-0 top-11 z-20 w-44 rounded-xl border border-(--border) bg-(--surface) p-1.5 shadow-xl">
+          {menuOpen && <div ref={menuRef} role="menu" className="fixed z-70 w-44 rounded-xl border border-(--border) bg-(--surface) p-1.5 shadow-xl" style={menuPosition}>
             <button type="button" onClick={() => { setMenuOpen(false); onEdit?.(url); }} className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-(--surface-soft)"><Pencil className="h-4 w-4" />Edit</button>
             <button type="button" disabled={actionLoading} onClick={() => { setMenuOpen(false); onToggleStatus?.(url); }} className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm hover:bg-(--surface-soft) disabled:opacity-50">{url.status === "active" ? <Ban className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}{url.status === "active" ? "Block link" : "Unblock link"}</button>
             <button type="button" onClick={() => { setMenuOpen(false); onDelete?.(url); }} className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm text-(--danger) hover:bg-[#f8e9e5]"><Trash2 className="h-4 w-4" />Delete</button>

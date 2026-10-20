@@ -2,7 +2,14 @@ import { Globe2, Monitor } from 'lucide-react';
 import { DashboardCard, LoadingBlock, SectionHeading } from './DashboardPrimitives';
 import { cx } from './classNames';
 
-export const BarChart = ({ data, empty = false, showUnique = false }) => {
+export const BarChart = ({
+  data,
+  empty = false,
+  showUnique = false,
+  primaryLabel = "Total clicks",
+  secondaryKey = "unique",
+  secondaryLabel = "Unique visitors",
+}) => {
   const max = Math.max(...data.map((item) => item.total), 1);
   return (
     <div className="mt-6">
@@ -15,8 +22,8 @@ export const BarChart = ({ data, empty = false, showUnique = false }) => {
             <div key={item.label} className="group flex h-full flex-1 flex-col items-center justify-end gap-1.5">
               <div className="relative flex h-full w-full items-end justify-center gap-0.5">
                 <div className="w-[46%] rounded-t-[3px] bg-(--primary)/85 transition group-hover:bg-(--primary-deep)" style={{ height: `${Math.max((item.total / max) * 100, item.total ? 3 : 0)}%` }} title={`${item.total} clicks`} />
-                {showUnique && <div className="w-[46%] rounded-t-[3px] bg-(--secondary) transition group-hover:bg-(--primary)/55" style={{ height: `${Math.max((item.unique / max) * 100, item.unique ? 3 : 0)}%` }} title={`${item.unique} unique visitors`} />}
-                {!empty && <span className="pointer-events-none absolute bottom-full mb-2 hidden rounded-md bg-(--primary-text) px-2 py-1 text-[10px] text-white group-hover:block">{item.total} clicks</span>}
+                {showUnique && <div className="w-[46%] rounded-t-[3px] bg-(--secondary) transition group-hover:bg-(--primary)/55" style={{ height: `${Math.max(((item[secondaryKey] || 0) / max) * 100, item[secondaryKey] ? 3 : 0)}%` }} title={`${item[secondaryKey] || 0} ${secondaryLabel.toLowerCase()}`} />}
+                {!empty && <span className="pointer-events-none absolute bottom-full mb-2 hidden rounded-md bg-(--primary-text) px-2 py-1 text-[10px] text-white group-hover:block">{item.total} {primaryLabel.toLowerCase()} · {showUnique ? `${item[secondaryKey] || 0} ${secondaryLabel.toLowerCase()}` : ""}</span>}
               </div>
               <span className="text-[9px] text-(--secondary-text) sm:text-[10px]">{item.label}</span>
             </div>
@@ -24,8 +31,8 @@ export const BarChart = ({ data, empty = false, showUnique = false }) => {
         </div>
       </div>
       <div className="mt-3 flex items-center justify-center gap-5 text-[11px] text-(--secondary-text)">
-        <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-(--primary)" />Total clicks</span>
-        {showUnique && <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-(--secondary)" />Unique visitors</span>}
+        <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-(--primary)" />{primaryLabel}</span>
+        {showUnique && <span className="inline-flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-(--secondary)" />{secondaryLabel}</span>}
       </div>
     </div>
   );

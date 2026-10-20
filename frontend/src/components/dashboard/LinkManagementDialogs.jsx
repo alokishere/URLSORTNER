@@ -66,3 +66,21 @@ export const DeleteLinkDialog = ({ link, onClose, onConfirm, deleting, error }) 
     </div>
   );
 };
+
+export const BulkDeleteLinksDialog = ({ count, onClose, onConfirm, deleting, error }) => {
+  const cancelRef = useRef(null);
+  useDialogLifecycle(Boolean(count), onClose, cancelRef);
+  if (!count) return null;
+
+  return (
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-(--primary-text)/40 px-4 py-6 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && !deleting && onClose()}>
+      <div role="alertdialog" aria-modal="true" aria-labelledby="bulk-delete-links-title" aria-describedby="bulk-delete-links-description" className="w-full max-w-md rounded-2xl border border-(--border) bg-(--surface) p-5 shadow-2xl sm:p-6">
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f8e9e5] text-(--danger)"><AlertTriangle className="h-5 w-5" /></span>
+        <h2 id="bulk-delete-links-title" className="mt-4 text-lg font-bold">Delete {count} selected link{count === 1 ? "" : "s"}?</h2>
+        <p id="bulk-delete-links-description" className="mt-2 text-sm leading-6 text-(--secondary-text)">The selected links and their recorded analytics will be permanently removed. This cannot be undone.</p>
+        {error && <p role="alert" className="mt-4 rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)">{error}</p>}
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button ref={cancelRef} variant="secondary" onClick={onClose} disabled={deleting}>Cancel</Button><button type="button" onClick={onConfirm} disabled={deleting} className="focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-(--danger) px-4 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 className="h-4 w-4" />{deleting ? "Deleting…" : `Delete ${count} link${count === 1 ? "" : "s"}`}</button></div>
+      </div>
+    </div>
+  );
+};

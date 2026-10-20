@@ -6,6 +6,7 @@ import {
   Copy,
   ExternalLink,
   Link2,
+  QrCode,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import instance from "../axios";
@@ -45,18 +46,18 @@ const buildChartData = (visits, range) => {
     start.setDate(firstDate.getDate() + index * bucketSize);
     const end = new Date(start);
     end.setDate(start.getDate() + bucketSize);
-    const total = visits.filter((visit) => {
+    const bucketVisits = visits.filter((visit) => {
       const timestamp = new Date(visit.timestamp).getTime();
       return timestamp >= start.getTime() && timestamp < end.getTime();
-    }).length;
+    });
 
     return {
       label: start.toLocaleDateString("en-IN", {
         month: "short",
         day: "2-digit",
       }),
-      total,
-      unique: 0,
+      total: bucketVisits.filter((visit) => visit.source !== "qr").length,
+      qrScans: bucketVisits.filter((visit) => visit.source === "qr").length,
     };
   });
 };
@@ -119,12 +120,13 @@ const Analytics = () => {
     () => (Array.isArray(result?.visitHistory) ? result.visitHistory : []),
     [result],
   );
+  const linkVisits = useMemo(() => visits.filter((visit) => visit.source !== "qr"), [visits]);
+  const qrVisits = useMemo(() => visits.filter((visit) => visit.source === "qr"), [visits]);
   const orderedVisits = useMemo(
     () => [...visits].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
     [visits],
   );
   const latest = orderedVisits[0] || null;
-  const first = orderedVisits[orderedVisits.length - 1] || null;
   const shortUrl = getShortUrl({ ...result, shortID: sortid });
   const chartData = useMemo(() => buildChartData(visits, range), [range, visits]);
   const countryItems = useMemo(() => aggregateVisitField(visits, "country"), [visits]);
@@ -206,24 +208,22 @@ const Analytics = () => {
       </DashboardCard>
       <div className="mb-4 grid gap-4 sm:grid-cols-3">
         <DashboardCard className="p-5">
-          <p className="text-sm text-(--secondary-text)">Total visits</p>
+          <p className="text-sm text-(--secondary-text)">Link clicks</p>
           <p className="mt-2 text-3xl font-bold text-(--primary-text)">
-            {Number(result?.totalVisits ?? visits.length)}
+            {Number(result?.linkClicks ?? linkVisits.length)}
           </p>
         </DashboardCard>
         <DashboardCard className="p-5">
-          <p className="text-sm text-(--secondary-text)">First click</p>
+          <p className="text-sm text-(--secondary-text)">QR scans</p>
           <p className="mt-2 text-lg font-bold text-(--primary-text)">
-            {first ? formatDate(first.timestamp) : "No visits yet"}
+            {Number(result?.qrScans ?? qrVisits.length)}
           </p>
           <p className="mt-1 text-xs text-(--secondary-text)">
-            {first
-              ? formatRelativeTime(first.timestamp)
-              : "Share your link to begin"}
+            Scans are recorded only from current tracked QR codes.
           </p>
         </DashboardCard>
         <DashboardCard className="p-5">
-          <p className="text-sm text-(--secondary-text)">Last click</p>
+          <p className="text-sm text-(--secondary-text)">Latest activity</p>
           <p className="mt-2 text-lg font-bold text-(--primary-text)">
             {latest ? formatDate(latest.timestamp) : "No visits yet"}
           </p>
@@ -269,7 +269,7 @@ const Analytics = () => {
       <DashboardCard className="mb-4 p-4 sm:p-5">
         <SectionHeading
           icon={BarChart3}
-          title="Click activity"
+          title="Link clicks and QR scans"
           action={
             <label className="relative">
               <span className="sr-only">Analytics date range</span>
@@ -293,12 +293,18 @@ const Analytics = () => {
           }
         />
         {visits.length ? (
-          <BarChart data={chartData} showUnique={false} />
+          <BarChart
+            data={chartData}
+            showUnique
+            primaryLabel="Link clicks"
+            secondaryKey="qrScans"
+            secondaryLabel="QR scans"
+          />
         ) : (
           <EmptyState
             icon={BarChart3}
-            title="No click activity yet"
-            description="Once someone visits this link, their recorded event will appear here."
+            title="No engagement activity yet"
+            description="Link clicks and tracked QR scans will appear here."
           />
         )}
       </DashboardCard>
@@ -342,6 +348,9 @@ const Analytics = () => {
                   <th className="px-4 py-3 text-[11px] font-semibold text-(--secondary-text)">
                     Visit ID
                   </th>
+                  <th className="px-4 py-3 text-[11px] font-semibold text-(--secondary-text)">
+                    Source
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -381,6 +390,12 @@ const Analytics = () => {
                     </td>
                     <td className="px-4 py-3.5 font-mono text-xs text-(--secondary-text)">
                       {visit._id || "Event ID unavailable"}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-(--secondary-text)">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-(--surface-soft) px-2 py-1 text-xs font-medium text-(--primary-text)">
+                        {visit.source === "qr" ? <QrCode className="h-3.5 w-3.5" aria-hidden="true" /> : <Link2 className="h-3.5 w-3.5" aria-hidden="true" />}
+                        {visit.source === "qr" ? "QR scan" : "Link click"}
+                      </span>
                     </td>
                   </tr>
                 ))}

@@ -7,6 +7,7 @@ const {
   getAnalytics,
   getallUrls,
   getQrCode,
+  getRecentActivity,
   setUrlStatus,
   updateUrl,
 } = require("../controllers/url.controller");
@@ -27,6 +28,7 @@ router.post("/", optionalAuth, guestCreateLimiter, generateNewShortID);
 
 router.use(authenticateUser);
 router.get("/", getallUrls);
+router.get("/activity", getRecentActivity);
 router.post("/claim", claimGuestUrls);
 router.get("/:shortID/analytics", getAnalytics);
 router.get("/:id/qr", getQrCode);

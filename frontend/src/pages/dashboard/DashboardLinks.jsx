@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDownUp,
+  Ban,
   Filter,
   Plus,
+  RotateCcw,
   Search,
   SlidersHorizontal,
+  Trash2,
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -15,7 +18,7 @@ import {
   LinkRow,
   PageIntro,
 } from "../../components/dashboard/DashboardPrimitives";
-import { DeleteLinkDialog, EditLinkDialog } from "../../components/dashboard/LinkManagementDialogs";
+import { BulkDeleteLinksDialog, DeleteLinkDialog, EditLinkDialog } from "../../components/dashboard/LinkManagementDialogs";
 import { fetchUrlsWithAnalytics, getClicks } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
 import { deleteShortUrl, updateShortUrl, updateShortUrlStatus } from "../../lib/urlApi";
@@ -32,6 +35,8 @@ const DashboardLinks = () => {
   const [status, setStatus] = useState("all");
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState([]);
+  const [bulkAction, setBulkAction] = useState("");
   const [mutationId, setMutationId] = useState("");
   const [mutationError, setMutationError] = useState("");
   const [toast, setToast] = useState("");
@@ -138,6 +143,64 @@ const DashboardLinks = () => {
     }
   };
 
+  const selectedLinks = useMemo(
+    () => urls.filter((url) => selected.includes(url._id)),
+    [selected, urls],
+  );
+
+  const updateSelectedStatus = async (nextStatus) => {
+    const targets = selectedLinks.filter((link) => link.status !== nextStatus);
+    if (!targets.length) {
+      announce(`Selected links are already ${nextStatus === "active" ? "unblocked" : "blocked"}.`);
+      return;
+    }
+
+    setBulkAction(nextStatus === "active" ? "unblocking" : "blocking");
+    const results = await Promise.allSettled(
+      targets.map((link) => updateShortUrlStatus(link._id, nextStatus)),
+    );
+    const updatedLinks = results
+      .filter((result) => result.status === "fulfilled")
+      .map((result) => result.value);
+    const failedCount = results.length - updatedLinks.length;
+
+    if (updatedLinks.length) {
+      const updates = new Map(updatedLinks.map((link) => [link._id, link]));
+      setUrls((current) => current.map((link) => updates.has(link._id) ? { ...link, ...updates.get(link._id) } : link));
+    }
+    announce(failedCount ? `${updatedLinks.length} link${updatedLinks.length === 1 ? "" : "s"} updated; ${failedCount} could not be updated.` : `${updatedLinks.length} selected link${updatedLinks.length === 1 ? "" : "s"} ${nextStatus === "active" ? "unblocked" : "blocked"}.`);
+    setBulkAction("");
+  };
+
+  const confirmBulkDelete = async () => {
+    const targets = urls.filter((url) => bulkDeleteIds.includes(url._id));
+    if (!targets.length) {
+      setBulkDeleteIds([]);
+      return;
+    }
+
+    setBulkAction("deleting");
+    setMutationError("");
+    const results = await Promise.allSettled(targets.map((link) => deleteShortUrl(link._id)));
+    const deletedIds = targets
+      .filter((_, index) => results[index].status === "fulfilled")
+      .map((link) => link._id);
+    const failedCount = targets.length - deletedIds.length;
+
+    if (deletedIds.length) {
+      setUrls((current) => current.filter((link) => !deletedIds.includes(link._id)));
+      setSelected((current) => current.filter((id) => !deletedIds.includes(id)));
+    }
+    if (failedCount) {
+      setBulkDeleteIds(targets.filter((_, index) => results[index].status === "rejected").map((link) => link._id));
+      setMutationError(`${failedCount} link${failedCount === 1 ? "" : "s"} could not be deleted. You can try again.`);
+    } else {
+      setBulkDeleteIds([]);
+      announce(`${deletedIds.length} link${deletedIds.length === 1 ? "" : "s"} deleted.`);
+    }
+    setBulkAction("");
+  };
+
   const allSelected =
     filtered.length > 0 && filtered.every((url) => selected.includes(url._id));
   const toggleAll = () =>
@@ -215,18 +278,17 @@ const DashboardLinks = () => {
             </Button>
           </div>
         </div>
-        {selected.length > 0 && (
-          <div className="flex items-center justify-between bg-(--secondary)/35 px-4 py-2.5 text-xs text-(--primary-text)">
-            <span>
-              {selected.length} link{selected.length === 1 ? "" : "s"} selected
-            </span>
-            <button
-              type="button"
-              onClick={() => setSelected([])}
-              className="focus-ring cursor-pointer font-semibold text-(--primary-deep)"
-            >
-              Clear selection
-            </button>
+        {selectedLinks.length > 0 && (
+          <div className="flex flex-col gap-3 border-b border-(--border) bg-(--secondary)/35 px-4 py-3 text-xs text-(--primary-text) sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <div className="flex items-center gap-2.5">
+              <span className="font-semibold">{selectedLinks.length} link{selectedLinks.length === 1 ? "" : "s"} selected</span>
+              <button type="button" onClick={() => setSelected([])} disabled={Boolean(bulkAction)} className="focus-ring cursor-pointer font-semibold text-(--primary-deep) disabled:cursor-not-allowed disabled:opacity-50">Clear selection</button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="secondary" className="min-h-9 px-3 text-xs" onClick={() => updateSelectedStatus("blocked")} disabled={Boolean(bulkAction)}><Ban className="h-3.5 w-3.5" />{bulkAction === "blocking" ? "Blocking…" : "Block selected"}</Button>
+              <Button variant="secondary" className="min-h-9 px-3 text-xs" onClick={() => updateSelectedStatus("active")} disabled={Boolean(bulkAction)}><RotateCcw className="h-3.5 w-3.5" />{bulkAction === "unblocking" ? "Unblocking…" : "Unblock selected"}</Button>
+              <button type="button" onClick={() => { setMutationError(""); setBulkDeleteIds(selectedLinks.map((link) => link._id)); }} disabled={Boolean(bulkAction)} className="focus-ring inline-flex min-h-9 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-(--danger) px-3 text-xs font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 className="h-3.5 w-3.5" />Delete selected</button>
+            </div>
           </div>
         )}
         {loading ? (
@@ -304,6 +366,7 @@ const DashboardLinks = () => {
       </DashboardCard>
       <EditLinkDialog link={editing} onClose={() => !mutationId && setEditing(null)} onSave={saveEdit} saving={Boolean(editing && mutationId === editing._id)} error={editing ? mutationError : ""} />
       <DeleteLinkDialog link={deleting} onClose={() => !mutationId && setDeleting(null)} onConfirm={confirmDelete} deleting={Boolean(deleting && mutationId === deleting._id)} error={deleting ? mutationError : ""} />
+      <BulkDeleteLinksDialog count={bulkDeleteIds.length} onClose={() => !bulkAction && setBulkDeleteIds([])} onConfirm={confirmBulkDelete} deleting={bulkAction === "deleting"} error={bulkDeleteIds.length ? mutationError : ""} />
       <QRCodeModal key={qrLink?._id || "closed-qr"} link={qrLink} onClose={closeQrModal} />
     </div>
   );

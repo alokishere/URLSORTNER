@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import {
   BarChart3,
-  CheckCircle2,
   Globe2,
   Link2,
   Plug,
-  QrCode,
   Rocket,
   Settings2,
   SlidersHorizontal,
@@ -193,31 +191,6 @@ export const AnalyticsOverview = () => {
   );
 };
 
-export const QRCodePage = () => (
-  <PlaceholderPage
-    icon={QrCode}
-    eyebrow="Growth tools"
-    title="QR codes"
-    description="Create trackable QR codes for the short links you share offline."
-    actionLabel="Create a short link"
-    featureList={[
-      {
-        title: "Link-based codes",
-        description: "Generate a QR code once your short link is available.",
-      },
-      {
-        title: "Print-ready exports",
-        description:
-          "Download support will be added alongside the QR generation endpoint.",
-      },
-      {
-        title: "Scan analytics",
-        description:
-          "Scan events can reuse link analytics when the backend exposes a source field.",
-      },
-    ]}
-  />
-);
 export const BioPagesPage = () => (
   <PlaceholderPage
     icon={Sparkles}
@@ -387,30 +360,6 @@ export const BillingPage = () => (
         title: "Upgrade path",
         description:
           "Payment and billing history will appear after a billing provider is connected.",
-      },
-    ]}
-  />
-);
-export const NotificationsPage = () => (
-  <PlaceholderPage
-    icon={CheckCircle2}
-    eyebrow="Notifications"
-    title="Notifications"
-    description="Stay close to link activity, workspace changes, and important account events."
-    featureList={[
-      {
-        title: "Activity alerts",
-        description:
-          "Event notifications will appear when the backend emits them.",
-      },
-      {
-        title: "Workspace updates",
-        description:
-          "Keep important changes visible without interrupting your work.",
-      },
-      {
-        title: "Quiet preferences",
-        description: "Choose how and when notifications reach you.",
       },
     ]}
   />

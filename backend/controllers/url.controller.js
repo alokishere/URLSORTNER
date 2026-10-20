@@ -333,6 +333,7 @@ async function getRedirectUrl(req, res) {
       browser: result.browser.name || "unknown",
       os: result.os.name || "unknown",
       referrer: req.get("referer") || "direct",
+      source: req.query?.source === "qr" ? "qr" : "link",
     });
     return res.redirect(urlEntry.redirectUrl);
   } catch (error) {
@@ -355,11 +356,15 @@ async function getAnalytics(req, res) {
     const visitHistory = await ClickEvent.find({ urlId: urlEntry._id }).sort({
       timestamp: -1,
     });
+    const linkClicks = visitHistory.filter((event) => event.source !== "qr");
+    const qrScans = visitHistory.filter((event) => event.source === "qr");
     return res
       .status(200)
       .json({
         visitHistory,
         totalVisits: visitHistory.length,
+        linkClicks: linkClicks.length,
+        qrScans: qrScans.length,
         url: serializeUrl(req, urlEntry),
       });
   } catch {
@@ -379,7 +384,8 @@ async function getQrCode(req, res) {
     }
 
     const shortUrl = shortUrlFor(req, urlEntry.shortID);
-    const qrCodeDataUrl = await QRCode.toDataURL(shortUrl, {
+    const qrUrl = `${shortUrl}?source=qr`;
+    const qrCodeDataUrl = await QRCode.toDataURL(qrUrl, {
       type: "image/png",
       width: 720,
       margin: 2,
@@ -390,12 +396,67 @@ async function getQrCode(req, res) {
       linkId: urlEntry._id,
       shortID: urlEntry.shortID,
       shortUrl,
+      qrUrl,
       qrCodeDataUrl,
       mimeType: "image/png",
     });
   } catch (error) {
     console.error("QR generation error:", error);
     return res.status(500).json({ error: "Unable to generate QR code" });
+  }
+}
+
+async function getRecentActivity(req, res) {
+  try {
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 100)
+      : 30;
+    const ownerQuery = isAdmin(req.user)
+      ? { createdby: { $ne: null } }
+      : { createdby: req.user._id };
+    const urls = await Url.find(ownerQuery)
+      .select("shortID title redirectUrl createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+    const urlIds = urls.map((url) => url._id);
+    const events = urlIds.length
+      ? await ClickEvent.find({ urlId: { $in: urlIds } })
+        .sort({ timestamp: -1 })
+        .limit(limit)
+        .lean()
+      : [];
+    const urlsById = new Map(urls.map((url) => [url._id.toString(), url]));
+    const eventItems = events.map((event) => {
+      const url = urlsById.get(event.urlId.toString());
+      const isQrScan = event.source === "qr";
+      return {
+        id: `event-${event._id}`,
+        type: isQrScan ? "qr_scan" : "link_click",
+        timestamp: event.timestamp,
+        linkId: event.urlId,
+        shortID: url?.shortID || "",
+        title: isQrScan ? "QR code scanned" : "Short link clicked",
+        detail: url?.shortID ? `u.alokdev.in/${url.shortID}` : "A link in your workspace",
+        source: event.source || "link",
+      };
+    });
+    const creationItems = urls.slice(0, limit).map((url) => ({
+      id: `link-${url._id}`,
+      type: "link_created",
+      timestamp: url.createdAt,
+      linkId: url._id,
+      shortID: url.shortID,
+      title: "Short link created",
+      detail: `u.alokdev.in/${url.shortID}`,
+      source: "workspace",
+    }));
+    const activity = [...eventItems, ...creationItems]
+      .sort((first, second) => new Date(second.timestamp) - new Date(first.timestamp))
+      .slice(0, limit);
+    return res.status(200).json({ activity });
+  } catch {
+    return res.status(500).json({ error: "Unable to load recent activity" });
   }
 }
 
@@ -407,6 +468,7 @@ module.exports = {
   getAnalytics,
   getallUrls,
   getQrCode,
+  getRecentActivity,
   setUrlStatus,
   updateUrl,
 };

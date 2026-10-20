@@ -28,6 +28,12 @@ const clickEventSchema = new mongoose.Schema(
     browser: String,
     os: String,
     referrer: String,
+    source: {
+      type: String,
+      enum: ["link", "qr"],
+      default: "link",
+      index: true,
+    },
   },
   { timestamps: true }
 );

@@ -31,8 +31,10 @@ export const getInitials = (user) => {
 };
 
 export const getShortUrl = (url) => {
-  if (url?.url) return url.url;
-  if (url?.shortUrl) return url.shortUrl;
+  if (typeof url?.url === "string") return url.url;
+  if (typeof url?.shortUrl === "string") return url.shortUrl;
+  if (typeof url?.url?.shortUrl === "string") return url.url.shortUrl;
+  if (typeof url?.url?.url === "string") return url.url.url;
   return `${instance.defaults.baseURL}/${url?.shortID || ""}`;
 };
 
@@ -57,6 +59,11 @@ export const fetchUrlAnalytics = async (shortID) => {
   return response.data || { visitHistory: [], totalVisits: 0 };
 };
 
+export const fetchRecentActivity = async (limit = 30) => {
+  const response = await instance.get(`/urls/activity?limit=${limit}`);
+  return Array.isArray(response.data?.activity) ? response.data.activity : [];
+};
+
 export const fetchUrlsWithAnalytics = async () => {
   const urls = await fetchUrls();
   const analytics = await Promise.allSettled(
@@ -70,6 +77,8 @@ export const fetchUrlsWithAnalytics = async () => {
       ...url,
       visitHistory: Array.isArray(data?.visitHistory) ? data.visitHistory : [],
       totalVisits: Number(data?.totalVisits || 0),
+      linkClicks: Number(data?.linkClicks || 0),
+      qrScans: Number(data?.qrScans || 0),
     };
   });
 };
