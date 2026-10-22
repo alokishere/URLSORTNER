@@ -4,8 +4,6 @@ import { AuthLoadingScreen } from "../auth/AuthContext";
 import { useAuth } from "../auth/authStore";
 import LandingPage from "../pages/LandingPage";
 
-const Loginpage = lazy(() => import("../pages/Loginpage"));
-const RegisterPage = lazy(() => import("../pages/RegisterPage"));
 const DashboardLayout = lazy(() => import("../layout/DashboardLayout"));
 const Analytics = lazy(() => import("../pages/Analytics"));
 const CreateSortUrl = lazy(() => import("../pages/CreateSortUrl"));
@@ -29,14 +27,17 @@ const ProtectedRoute = ({ children }) => {
   if (status === "checking") return <AuthLoadingScreen />;
   if (status !== "authenticated") {
     const next = `${location.pathname}${location.search}`;
-    return <Navigate to={`/login?next=${encodeURIComponent(next)}`} replace />;
+    return <Navigate to="/" state={{ authMode: "login", next }} replace />;
   }
   return children;
 };
 
-const PublicOnlyRoute = ({ children }) => {
+const LegacyAuthRedirect = ({ mode }) => {
   const { status } = useAuth();
-  return status === "authenticated" ? <Navigate to="/dashboard" replace /> : children;
+  const location = useLocation();
+  if (status === "checking") return <AuthLoadingScreen />;
+  if (status === "authenticated") return <Navigate to="/dashboard" replace />;
+  return <Navigate to="/" state={{ authMode: mode, next: new URLSearchParams(location.search).get("next") }} replace />;
 };
 
 const HomeRoute = () => {
@@ -52,15 +53,15 @@ const LegacyAnalyticsRedirect = () => {
 const FallbackRoute = () => {
   const { status } = useAuth();
   if (status === "checking") return <AuthLoadingScreen />;
-  return <Navigate to={status === "authenticated" ? "/dashboard" : "/login"} replace />;
+  return <Navigate to={status === "authenticated" ? "/dashboard" : "/"} replace />;
 };
 
 const Mainroute = () => (
   <Suspense fallback={null}>
     <Routes>
       <Route path="/" element={<HomeRoute />} />
-      <Route path="/login" element={<PublicOnlyRoute><Loginpage /></PublicOnlyRoute>} />
-      <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
+      <Route path="/login" element={<LegacyAuthRedirect mode="login" />} />
+      <Route path="/register" element={<LegacyAuthRedirect mode="register" />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route index element={<DashboardHome />} />
         <Route path="links" element={<DashboardLinks />} />

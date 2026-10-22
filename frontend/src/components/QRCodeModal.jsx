@@ -115,7 +115,7 @@ const QRCodeModal = ({ link, onClose }) => {
             <p className="mt-4 [overflow-wrap:anywhere] rounded-xl bg-(--surface-soft) px-3 py-2 text-center text-xs font-semibold text-(--primary-text)">{qrData?.shortUrl || link?.shortUrl || link?.url || `Short link ${link?.shortID || ""}`}</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               <button type="button" onClick={copy} disabled={!qrData || loading} className="focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-(--border) text-sm font-semibold hover:bg-(--surface-soft) disabled:cursor-not-allowed disabled:opacity-50">{copied ? <Check className="h-4 w-4 text-(--success)" /> : <Copy className="h-4 w-4" />}{copied ? "Copied" : "Copy link"}</button>
-              <a href={qrData?.qrCodeDataUrl || undefined} download={`urlsortner-${qrData?.shortID || link?.shortID || "link"}.png`} aria-disabled={!qrData || loading} className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-(--accent) text-sm font-semibold text-(--surface) transition hover:bg-(--accent-deep) aria-disabled:pointer-events-none aria-disabled:opacity-50"><Download className="h-4 w-4" />Download QR code</a>
+              <a href={qrData?.qrCodeDataUrl || undefined} download={`ek-url-${qrData?.shortID || link?.shortID || "link"}.png`} aria-disabled={!qrData || loading} className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-(--accent) text-sm font-semibold text-(--surface) transition hover:bg-(--accent-deep) aria-disabled:pointer-events-none aria-disabled:opacity-50"><Download className="h-4 w-4" />Download QR code</a>
             </div>
           </motion.div>
         </motion.div>

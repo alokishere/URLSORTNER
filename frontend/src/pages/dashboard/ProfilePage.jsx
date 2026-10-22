@@ -198,7 +198,7 @@ const ProfilePage = () => {
     try {
       await instance.delete(`/user/delete/${userId}`);
       localStorage.removeItem("user");
-      navigate("/login", { replace: true });
+      navigate("/", { replace: true });
     } catch (error) {
       setDeleteState({ loading: false, error: getApiMessage(error, "We could not delete your account right now.") });
     }

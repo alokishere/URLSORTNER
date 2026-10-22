@@ -57,7 +57,7 @@ const DashboardLayout = () => {
       /* local sign-out still clears the client session */
     }
     clearSession();
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const submitSearch = (event) => {
@@ -95,12 +95,7 @@ const DashboardLayout = () => {
         )}
       >
         <div className="flex h-19 shrink-0 items-center gap-3 border-b border-(--border) px-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--primary) text-white">
-            <Link2 className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <span className="text-sm font-bold tracking-[0.22em] text-(--primary-text)">
-            URLSORTNER
-          </span>
+          <img src="/primarylogo.png" alt="Ek URL" className="h-11 w-auto max-w-36 object-contain object-left" />
           <button
             type="button"
             aria-label="Close sidebar"
