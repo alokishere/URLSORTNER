@@ -100,7 +100,7 @@ const QRCodeModal = ({ link, onClose }) => {
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--secondary)/65 text-(--primary-deep)"><QrCode className="h-5 w-5" aria-hidden="true" /></span>
+                <span className="flex h-10 w-10 items-center text-(--primary-deep)"><QrCode className="h-5 w-5" aria-hidden="true" /></span>
                 <div><h2 id="qr-dialog-title" className="font-bold text-(--primary-text)">QR code</h2><p className="mt-1 text-sm text-(--secondary-text)">Scan or download the working short link.</p></div>
               </div>
               <button ref={closeRef} type="button" onClick={onClose} aria-label="Close QR code" className="focus-ring inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-(--secondary-text) hover:bg-(--surface-soft)"><X className="h-5 w-5" /></button>

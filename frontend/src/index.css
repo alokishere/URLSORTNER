@@ -172,3 +172,62 @@ body {
 ::-webkit-scrollbar-track {
   background: rgba(199, 211, 192, 0.25);
 } 
+
+/* Semantic surfaces and icon colors are shared by the public and private UI. */
+:root {
+  color-scheme: light;
+  --danger-soft: #f8e9e5;
+  --success-soft: #e8f1e6;
+  --warning-soft: #f4ead7;
+  --warning: #785a23;
+  --icon-link: #bd531b;
+  --icon-analytics: #3566bd;
+  --icon-qr: #7044bf;
+  --icon-security: #287449;
+  --icon-campaign: #bb4d76;
+  --icon-utility: #496981;
+}
+:root.dim-mode {
+  color-scheme: dark;
+  --background: #151a1c;
+  --surface: #20272a;
+  --surface-soft: #2b3437;
+  --border: #445055;
+  --primary-text: #f0f5f1;
+  --secondary-text: #b6c4bf;
+  --primary: #9cb99c;
+  --secondary: #364b40;
+  --primary-deep: #b5d6b5;
+  --accent: #edf2ea;
+  --accent-deep: #cddbd0;
+  --success: #9ad5ad;
+  --danger: #ffac9e;
+  --danger-soft: #472c2b;
+  --success-soft: #253e30;
+  --warning-soft: #493b25;
+  --warning: #e9c684;
+  --icon-link: #ffad78;
+  --icon-analytics: #8ab8ff;
+  --icon-qr: #c2a8ff;
+  --icon-security: #90d8aa;
+  --icon-campaign: #f2a0c0;
+  --icon-utility: #a6c5d9;
+}
+:root.dim-mode .dashboard-app { background: radial-gradient(circle at 82% 3%, #243733 0, transparent 26rem), var(--background); }
+:root.dim-mode .dash-card { background: var(--surface); }
+:root.dim-mode .dashboard-grid-line { background-image: linear-gradient(to right, #394846 1px, transparent 1px), linear-gradient(to bottom, #394846 1px, transparent 1px); }
+.theme-control { display: inline-flex; align-items: center; gap: .25rem; min-height: 2.75rem; color: var(--secondary-text); border-radius: .5rem; padding: 0 .25rem; }
+.theme-control svg { color: var(--icon-utility); }
+.theme-control select { max-width: 5rem; cursor: pointer; color: var(--primary-text); background: transparent; border: 0; font-size: .75rem; font-weight: 600; outline: none; }
+.theme-control option { background: var(--surface); color: var(--primary-text); }
+@media (max-width: 400px) { .theme-control { gap: 0; padding: 0; } .theme-control select { max-width: 4.4rem; font-size: .7rem; } }
+
+/* Semantic Lucide colors. Action icons on filled buttons retain their inherited contrast. */
+:is(.landing-shell, .dashboard-app) svg:is(.lucide-link, .lucide-link-2, .lucide-zap, .lucide-external-link):is(:not(button svg), .semantic-icon) { color: var(--icon-link); }
+:is(.landing-shell, .dashboard-app) svg:is(.lucide-chart-no-axes-combined, .lucide-chart-column-increasing, .lucide-chart-column, .lucide-bar-chart-3, .lucide-trending-up, .lucide-sliders-horizontal):is(:not(button svg), .semantic-icon) { color: var(--icon-analytics); }
+:is(.landing-shell, .dashboard-app) svg:is(.lucide-qr-code):is(:not(button svg), .semantic-icon) { color: var(--icon-qr); }
+:is(.landing-shell, .dashboard-app) svg:is(.lucide-shield-check, .lucide-check-circle-2, .lucide-circle-check-big, .lucide-lock-keyhole):is(:not(button svg), .semantic-icon) { color: var(--icon-security); }
+:is(.landing-shell, .dashboard-app) svg:is(.lucide-megaphone, .lucide-sparkles):is(:not(button svg), .semantic-icon) { color: var(--icon-campaign); }
+:is(.landing-shell, .dashboard-app) svg:is(.lucide-settings, .lucide-globe-2, .lucide-globe, .lucide-plug, .lucide-user-round):is(:not(button svg), .semantic-icon) { color: var(--icon-utility); }
+
+:root.dim-mode img[src="/primarylogo.png"] { filter: brightness(0) invert(1); }

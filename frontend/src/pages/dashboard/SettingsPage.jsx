@@ -88,7 +88,7 @@ const SettingsPage = () => {
       </DashboardCard>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {settingsCards.map(({ title, description, icon: Icon, route, label, tone }) => (
+        {settingsCards.map(({ title, description, icon: Icon, route, label }) => (
           <button
             type="button"
             key={title}
@@ -96,8 +96,8 @@ const SettingsPage = () => {
             className="focus-ring dash-card dash-card-hover group min-h-48 cursor-pointer p-5 text-left transition sm:p-6"
           >
             <div className="flex items-start justify-between gap-4">
-              <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${tone === "accent" ? "bg-[#f3ead7] text-(--accent-deep)" : "bg-(--secondary)/65 text-(--primary-deep)"}`}>
-                <Icon className="h-5 w-5" aria-hidden="true" />
+              <span className="flex h-11 w-11 items-center text-(--primary-deep)">
+                <Icon className="semantic-icon h-5 w-5" aria-hidden="true" />
               </span>
               <ChevronRight className="mt-1 h-4 w-4 text-(--secondary-text) transition-transform group-hover:translate-x-1 group-hover:text-(--primary-text)" aria-hidden="true" />
             </div>

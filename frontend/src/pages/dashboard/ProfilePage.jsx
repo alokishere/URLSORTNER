@@ -84,7 +84,7 @@ const Notice = ({ tone = "success", children, onDismiss }) => {
   return (
     <div
       role={isError ? "alert" : "status"}
-      className={`flex items-start gap-3 rounded-xl border px-3.5 py-3 text-sm ${isError ? "border-(--danger)/25 bg-[#f8e8e4] text-(--danger)" : "border-(--success)/25 bg-[#e8f1e6] text-(--success)"}`}
+      className={`flex items-start gap-3 rounded-xl border px-3.5 py-3 text-sm ${isError ? "border-(--danger)/25 bg-(--danger-soft) text-(--danger)" : "border-(--success)/25 bg-(--success-soft) text-(--success)"}`}
     >
       {isError ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />}
       <span className="flex-1 leading-5">{children}</span>
@@ -247,14 +247,14 @@ const ProfilePage = () => {
             <div className="flex flex-col gap-4 border-b border-(--border) pb-5 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--secondary)/65 text-(--primary-deep)">
+                  <span className="flex h-9 w-9 items-center text-(--primary-deep)">
                     <UserRound className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <h2 className="text-base font-bold text-(--primary-text)">Profile details</h2>
                 </div>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-(--secondary-text)">This information appears on your account and is used for sign-in.</p>
               </div>
-              <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#e8f1e6] px-2.5 py-1 text-[11px] font-semibold text-(--success)">
+              <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-(--success-soft) px-2.5 py-1 text-[11px] font-semibold text-(--success)">
                 <Check className="h-3.5 w-3.5" aria-hidden="true" /> Active account
               </span>
             </div>
@@ -277,7 +277,7 @@ const ProfilePage = () => {
           <DashboardCard id="password" className="scroll-mt-24 p-5 sm:p-6">
             <div className="border-b border-(--border) pb-5">
               <div className="flex items-center gap-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--secondary)/65 text-(--primary-deep)">
+                <span className="flex h-9 w-9 items-center text-(--primary-deep)">
                   <KeyRound className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <h2 className="text-base font-bold text-(--primary-text)">Password & security</h2>
@@ -326,7 +326,7 @@ const ProfilePage = () => {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f8e8e4] text-(--danger)">
+                  <span className="flex h-9 w-9 items-center text-(--danger)">
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <h2 className="text-base font-bold text-(--primary-text)">Delete account</h2>
@@ -334,7 +334,7 @@ const ProfilePage = () => {
                 <p className="mt-2 max-w-xl text-sm leading-6 text-(--secondary-text)">Permanently remove your profile and account access. This action cannot be undone.</p>
                 {deleteState.error && <p className="mt-3 text-sm font-medium text-(--danger)">{deleteState.error}</p>}
               </div>
-              <Button variant="secondary" className="border-(--danger)/35 text-(--danger) hover:border-(--danger) hover:bg-[#f8e8e4]" onClick={() => setDeleteOpen(true)}>
+              <Button variant="secondary" className="border-(--danger)/35 text-(--danger) hover:border-(--danger) hover:bg-(--danger-soft)" onClick={() => setDeleteOpen(true)}>
                 Delete account
               </Button>
             </div>
@@ -347,7 +347,7 @@ const ProfilePage = () => {
           <div role="dialog" aria-modal="true" aria-labelledby="delete-account-title" className="w-full max-w-md rounded-2xl border border-(--border) bg-(--surface) p-5 shadow-2xl sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f8e8e4] text-(--danger)">
+                <span className="flex h-10 w-10 shrink-0 items-center text-(--danger)">
                   <AlertTriangle className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div>

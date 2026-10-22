@@ -82,7 +82,7 @@ const CreateLinkModal = ({ open, onClose, onCreated }) => {
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-(--secondary)/65 text-(--primary-deep)">
+            <span className="flex h-10 w-10 shrink-0 items-center text-(--primary-deep)">
               <Link2 className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
@@ -156,7 +156,7 @@ const CreateLinkModal = ({ open, onClose, onCreated }) => {
           </div>
 
           {error && (
-            <p role="alert" className="rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)">
+            <p role="alert" className="rounded-xl border border-(--danger)/35 bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)">
               {error}
             </p>
           )}
@@ -173,7 +173,7 @@ const CreateLinkModal = ({ open, onClose, onCreated }) => {
         </form>
 
         {result && (
-          <div className="mt-5 rounded-xl border border-(--success)/25 bg-[#e8f1e6] p-4">
+          <div className="mt-5 rounded-xl border border-(--success)/25 bg-(--success-soft) p-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-(--success)">
               <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
               Short link created

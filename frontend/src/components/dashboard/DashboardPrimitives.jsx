@@ -123,7 +123,7 @@ export const SectionHeading = ({ icon: Icon, title, description, action }) => (
   <div className="flex items-start justify-between gap-4">
     <div className="flex items-start gap-3">
       {Icon && (
-        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-(--secondary)/55 text-(--primary-deep)">
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center text-(--primary-deep)">
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
       )}
@@ -140,8 +140,8 @@ export const SectionHeading = ({ icon: Icon, title, description, action }) => (
 
 export const StatusPill = ({ children = "Active", tone = "success" }) => {
   const tones = {
-    success: "bg-[#e4eee2] text-(--success)",
-    warning: "bg-[#f4ead7] text-[#8c6d35]",
+    success: "bg-(--success-soft) text-(--success)",
+    warning: "bg-(--warning-soft) text-(--warning)",
     neutral: "bg-(--surface-soft) text-(--secondary-text)",
   };
   return (
@@ -163,22 +163,18 @@ export const StatCard = ({
   value,
   change,
   helper,
-  tone = "sage",
 }) => (
   <DashboardCard className="dash-card-hover p-4 sm:p-5">
     <div className="flex items-start justify-between gap-3">
       <span
         className={cx(
-          "flex h-11 w-11 items-center justify-center rounded-xl",
-          tone === "gold"
-            ? "bg-[#f3ead7] text-[var(--accent-deep)]"
-            : "bg-(--secondary)/65 text-(--primary-deep)",
+          "flex h-11 w-11 items-center text-(--primary-deep)",
         )}
       >
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
       {change && (
-        <span className="rounded-full bg-[#e8f0e6] px-2 py-1 text-[11px] font-semibold text-(--success)">
+        <span className="rounded-full bg-(--success-soft) px-2 py-1 text-[11px] font-semibold text-(--success)">
           ↑ {change}
         </span>
       )}
@@ -198,7 +194,7 @@ export const EmptyState = ({
   action,
 }) => (
   <div className="flex min-h-48 flex-col items-center justify-center px-6 py-10 text-center">
-    <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-(--secondary)/65 text-(--primary-deep)">
+    <span className="mb-4 flex h-12 w-12 items-center justify-center text-(--primary-deep)">
       <Icon className="h-5 w-5" aria-hidden="true" />
     </span>
     <h3 className="text-base font-semibold text-(--primary-text)">{title}</h3>
@@ -313,7 +309,7 @@ export const LinkRow = ({
       </td>
       <td className="min-w-48 px-3 py-3.5 sm:px-4">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-(--secondary)/65 text-(--primary-deep)">
+          <span className="flex h-8 w-8 shrink-0 items-center text-(--primary-deep)">
             <Link2 className="h-4 w-4" aria-hidden="true" />
           </span>
           <div className="min-w-0">
@@ -419,7 +415,7 @@ export const LinkRow = ({
                     setMenuOpen(false);
                     onDelete?.(url);
                   }}
-                  className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm text-(--danger) hover:bg-[#f8e9e5]"
+                  className="focus-ring flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-lg px-3 text-left text-sm text-(--danger) hover:bg-(--danger-soft)"
                 >
                   <Trash2 className="h-4 w-4" />
                   Delete

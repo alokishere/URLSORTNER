@@ -34,7 +34,7 @@ const NotificationsPage = () => {
       {error && (
         <p
           role="alert"
-          className="mb-4 rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)"
+          className="mb-4 rounded-xl border border-(--danger)/35 bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)"
         >
           {error}
         </p>
@@ -69,8 +69,8 @@ const NotificationsPage = () => {
                     }
                     className="focus-ring flex w-full cursor-pointer items-center gap-3 px-4 py-4 text-left hover:bg-(--surface-soft)/55 sm:px-5"
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-(--secondary)/65 text-(--primary-deep)">
-                      <Icon className="h-4.5 w-4.5" aria-hidden="true" />
+                    <span className="flex h-10 w-10 shrink-0 items-center text-(--primary-deep)">
+                      <Icon className="semantic-icon h-4.5 w-4.5" aria-hidden="true" />
                     </span>
                     <span className="min-w-0 flex-1">
                       <strong className="block text-sm text-(--primary-text)">

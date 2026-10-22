@@ -148,7 +148,7 @@ const CreateSortUrl = () => {
             {error && (
               <p
                 role="alert"
-                className="rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)"
+                className="rounded-xl border border-(--danger)/35 bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)"
               >
                 {error}
               </p>

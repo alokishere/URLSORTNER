@@ -204,7 +204,7 @@ const ProductPreview = () => {
         </span>
       </div>
       <div className="grid md:grid-cols-[176px_minmax(0,1fr)]">
-        <aside className="hidden border-r border-(--border) bg-[#fafbf8] p-3 md:flex md:flex-col">
+        <aside className="hidden border-r border-(--border) bg-(--background) p-3 md:flex md:flex-col">
           <div className="space-y-1">
             {navItems.map(([Icon, label], index) => (
               <div
@@ -480,11 +480,7 @@ const LandingPage = () => {
       <main id="main-content">
         <section className="mx-auto max-w-[1120px] px-4 pb-24 pt-16 text-center sm:px-6 sm:pb-28 sm:pt-20 lg:px-8 lg:pb-32 lg:pt-24">
           <Reveal className="mx-auto flex max-w-[760px] flex-col items-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-(--border) bg-(--surface) px-3 py-1.5 text-[11px] font-medium text-(--secondary-text)">
-              <span className="h-1.5 w-1.5 rounded-full bg-(--primary)" />
-              Shorten and save guest links without signing up
-            </div>
-            <h1 className="mt-6 text-balance text-[2.9rem] font-bold leading-[0.98] tracking-[-0.055em] text-(--primary-text) sm:text-[4.1rem] lg:text-[4.5rem]">
+            <h1 className="mt-5 text-balance text-[2.9rem] font-bold leading-[0.98] tracking-[-0.055em] text-(--primary-text) sm:text-[4.1rem] lg:text-[4.5rem]">
               <span className="block">Short links.</span>
               <span className="block">Real possibilities.</span>
             </h1>
@@ -527,7 +523,7 @@ const LandingPage = () => {
                 <p
                   id="landing-url-error"
                   role="alert"
-                  className="mt-2 rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-3 py-2 text-sm text-(--danger)"
+                  className="mt-2 rounded-xl border border-(--danger)/35 bg-(--danger-soft) px-3 py-2 text-sm text-(--danger)"
                 >
                   {error}
                 </p>
@@ -705,7 +701,7 @@ const LandingPage = () => {
                   key={title}
                   className="rounded-[16px] border border-(--border) bg-(--surface) p-5 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-(--primary)/65 hover:shadow-[0_12px_30px_rgba(31,33,28,0.05)]"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-(--border) bg-(--background) text-(--primary-text)">
+                  <span className="flex h-9 w-9 items-center text-(--primary-text)">
                     <Icon className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <h3 className="mt-5 text-sm font-semibold text-(--primary-text)">
@@ -744,7 +740,7 @@ const LandingPage = () => {
                   className="rounded-[16px] border border-(--border) bg-(--surface) p-5 sm:p-6"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-(--surface-soft) text-(--primary-deep)">
+                    <span className="flex h-10 w-10 items-center text-(--primary-deep)">
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <span className="font-mono text-[11px] text-(--secondary-text)">
@@ -780,7 +776,7 @@ const LandingPage = () => {
                   "Create short links with Ek URL today",
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-2.5">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-(--surface-soft) text-(--primary-deep)">
+                    <span className="flex h-5 w-5 items-center justify-center text-(--primary-deep)">
                       <Check className="h-3 w-3" aria-hidden="true" />
                     </span>
                     {item}
@@ -822,7 +818,7 @@ const LandingPage = () => {
                   </div>
                 </div>
                 <div className="mt-3 flex items-center gap-3 rounded-xl border border-(--border) p-3.5">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] bg-(--secondary) text-(--primary-deep)">
+                  <span className="flex h-9 w-9 shrink-0 items-center text-(--primary-deep)">
                     <QrCode className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">

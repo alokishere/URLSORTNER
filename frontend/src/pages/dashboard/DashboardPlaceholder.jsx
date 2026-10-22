@@ -57,8 +57,8 @@ export const PlaceholderPage = ({
       <div className="grid gap-4 md:grid-cols-3">
         {featureList.map((item) => (
           <DashboardCard key={item.title} className="p-5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--secondary)/65 text-(--primary-deep)">
-              <Icon className="h-5 w-5" aria-hidden="true" />
+            <span className="flex h-10 w-10 items-center text-(--primary-deep)">
+              <Icon className="semantic-icon h-5 w-5" aria-hidden="true" />
             </span>
             <h2 className="mt-4 text-sm font-bold text-(--primary-text)">
               {item.title}
@@ -101,7 +101,7 @@ export const AnalyticsOverview = () => {
       />
       <p className="mb-4 text-xs text-(--secondary-text)" role="status">{isFetching && !loading ? "Updating analytics…" : "Analytics refresh approximately every minute."}</p>
       {loadError && (
-        <p role="alert" className="mb-4 rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)">
+        <p role="alert" className="mb-4 rounded-xl border border-(--danger)/35 bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)">
           {loadError}
         </p>
       )}
@@ -134,7 +134,7 @@ export const AnalyticsOverview = () => {
               }
               className="focus-ring flex w-full cursor-pointer items-center gap-4 py-4 text-left hover:bg-(--surface-soft)/45"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-(--secondary)/65 text-(--primary-deep)">
+              <span className="flex h-9 w-9 items-center text-(--primary-deep)">
                 <Link2 className="h-4 w-4" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
