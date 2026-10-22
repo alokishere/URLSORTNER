@@ -3,11 +3,12 @@ import axios from 'axios';
 
 const host = window.location.hostname;
 const isLocal = host === 'localhost' || host === '127.0.0.1';
+const productionApiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://www.ekurl.in';
 
 const instance = axios.create({
   baseURL: isLocal
     ? 'http://localhost:3000'
-    : 'https://ekurl.in',
+    : productionApiBaseUrl,
 
   withCredentials: true,
 });
@@ -15,6 +16,6 @@ const instance = axios.create({
 
 instance.defaults.redirecturl = isLocal
   ? 'localhost:3000'
-  : 'ekurl.in';
+  : 'www.ekurl.in';
 
 export default instance;
