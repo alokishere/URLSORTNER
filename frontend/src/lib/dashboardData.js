@@ -49,19 +49,22 @@ export const formatCompact = (value) => {
   return String(value);
 };
 
-export const fetchUrls = async () => {
-  const response = await instance.get("/urls/");
-  return Array.isArray(response.data) ? response.data : [];
+export const fetchUrls = async (signal) => {
+  const response = await instance.get("/urls/", { signal });
+  if (!Array.isArray(response.data)) throw new Error("The server returned an invalid link list.");
+  return response.data;
 };
 
-export const fetchUrlAnalytics = async (shortID) => {
-  const response = await instance.get(`/urls/${shortID}/analytics`);
-  return response.data || { visitHistory: [], totalVisits: 0 };
+export const fetchUrlAnalytics = async (shortID, signal) => {
+  const response = await instance.get(`/urls/${encodeURIComponent(shortID)}/analytics`, { signal });
+  if (!response.data || !Array.isArray(response.data.visitHistory)) throw new Error("The server returned invalid analytics.");
+  return response.data;
 };
 
-export const fetchRecentActivity = async (limit = 30) => {
-  const response = await instance.get(`/urls/activity?limit=${limit}`);
-  return Array.isArray(response.data?.activity) ? response.data.activity : [];
+export const fetchRecentActivity = async (limit = 30, signal) => {
+  const response = await instance.get(`/urls/activity?limit=${limit}`, { signal });
+  if (!Array.isArray(response.data?.activity)) throw new Error("The server returned invalid activity data.");
+  return response.data.activity;
 };
 
 export const fetchUrlsWithAnalytics = async () => {

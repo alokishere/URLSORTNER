@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   BarChart3,
   Globe2,
@@ -21,8 +20,10 @@ import {
   SectionHeading,
   StatusPill,
 } from "../../components/dashboard/DashboardPrimitives";
-import { fetchUrlsWithAnalytics, formatCompact, getClicks } from "../../lib/dashboardData";
+import { formatCompact, getClicks } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
+
+import { useDashboardLinks } from "../../lib/dashboardQueries";
 
 export const PlaceholderPage = ({
   icon: Icon = Sparkles,
@@ -88,32 +89,9 @@ export const PlaceholderPage = ({
 
 export const AnalyticsOverview = () => {
   const navigate = useNavigate();
-  const { openCreateLink, createdVersion } = useCreateLinkModal();
-  const [urls, setUrls] = useState([]);
-  const [loadedVersion, setLoadedVersion] = useState(-1);
-  const [loadError, setLoadError] = useState("");
-  useEffect(() => {
-    let active = true;
-    fetchUrlsWithAnalytics()
-      .then((data) => {
-        if (active) {
-          setUrls(data);
-          setLoadError("");
-          setLoadedVersion(createdVersion);
-        }
-      })
-      .catch((error) => {
-        if (active) {
-          setUrls([]);
-          setLoadError(error.response?.data?.message || "We could not load analytics right now.");
-          setLoadedVersion(createdVersion);
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }, [createdVersion]);
-  const loading = loadedVersion !== createdVersion;
+  const { openCreateLink } = useCreateLinkModal();
+  const { data: urls = [], isLoading: loading, isFetching, error } = useDashboardLinks();
+  const loadError = error ? (error.response?.data?.message || "We could not load analytics right now.") : "";
   return (
     <div className="mx-auto max-w-[1100px]">
       <PageIntro
@@ -121,6 +99,7 @@ export const AnalyticsOverview = () => {
         title="Link analytics"
         description="Choose a link to inspect its recorded visit history and performance."
       />
+      <p className="mb-4 text-xs text-(--secondary-text)" role="status">{isFetching && !loading ? "Updating analytics…" : "Analytics refresh approximately every minute."}</p>
       {loadError && (
         <p role="alert" className="mb-4 rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)">
           {loadError}

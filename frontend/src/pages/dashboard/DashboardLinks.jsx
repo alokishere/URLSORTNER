@@ -19,17 +19,22 @@ import {
   PageIntro,
 } from "../../components/dashboard/DashboardPrimitives";
 import { BulkDeleteLinksDialog, DeleteLinkDialog, EditLinkDialog } from "../../components/dashboard/LinkManagementDialogs";
-import { fetchUrlsWithAnalytics, getClicks } from "../../lib/dashboardData";
+import { getClicks } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
 import { deleteShortUrl, updateShortUrl, updateShortUrlStatus } from "../../lib/urlApi";
 import QRCodeModal from "../../components/QRCodeModal";
 
+import { useDashboardLinks, keys, userIdFor } from "../../lib/dashboardQueries";
+import { queryClient } from "../../lib/queryClient";
+import { useAuth } from "../../auth/authStore";
+
 const DashboardLinks = () => {
-  const { openCreateLink, createdVersion } = useCreateLinkModal();
+  const { openCreateLink } = useCreateLinkModal();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [urls, setUrls] = useState([]);
-  const [loadedVersion, setLoadedVersion] = useState(-1);
-  const [loadError, setLoadError] = useState("");
+  const { user } = useAuth();
+  const { data: urls = [], isLoading: loading, error } = useDashboardLinks();
+  const loadError = error ? (error.response?.data?.message || "We could not load your links right now.") : "";
+  const setUrls = (updater) => queryClient.setQueryData(keys.overview(userIdFor(user)), (current) => current ? updater(current) : undefined);
   const [selected, setSelected] = useState([]);
   const [sort, setSort] = useState("created");
   const [status, setStatus] = useState("all");
@@ -45,37 +50,12 @@ const DashboardLinks = () => {
   const query = searchParams.get("search") || "";
 
   useEffect(() => {
-    let active = true;
-    fetchUrlsWithAnalytics()
-      .then((data) => {
-        if (active) {
-          setUrls(data);
-          setLoadError("");
-          setLoadedVersion(createdVersion);
-          if (initialRequestedQr.current) {
-            const requestedLink = data.find((item) => item.shortID === initialRequestedQr.current);
-            if (requestedLink) {
-              setQrLink(requestedLink);
-            } else {
-              setToast("That link is not available in your workspace.");
-            }
-            initialRequestedQr.current = "";
-          }
-        }
-      })
-      .catch((error) => {
-        if (active) {
-          setUrls([]);
-          setLoadError(error.response?.data?.message || "We could not load your links right now.");
-          setLoadedVersion(createdVersion);
-        }
-      })
-    return () => {
-      active = false;
-    };
-  }, [createdVersion]);
-
-  const loading = loadedVersion !== createdVersion;
+    if (!initialRequestedQr.current || loading) return;
+    const requestedLink = urls.find(item => item.shortID === initialRequestedQr.current);
+    if (requestedLink) setQrLink(requestedLink);
+    else if (!error) setToast("That link is not available in your workspace.");
+    initialRequestedQr.current = "";
+  }, [urls, loading, error]);
 
   const filtered = useMemo(() => {
     const next = urls.filter((url) => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   BarChart3,
@@ -9,8 +9,10 @@ import {
   QrCode,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import instance from "../axios";
-import { BarChart, InsightList } from "../components/dashboard/AnalyticsWidgets";
+import {
+  BarChart,
+  InsightList,
+} from "../components/dashboard/AnalyticsWidgets";
 import {
   Button,
   DashboardCard,
@@ -20,12 +22,13 @@ import {
   SectionHeading,
 } from "../components/dashboard/DashboardPrimitives";
 import {
-  fetchUrls,
   formatDate,
   formatRelativeTime,
   getShortUrl,
   aggregateVisitField,
 } from "../lib/dashboardData";
+
+import { useLinkAnalytics } from "../lib/dashboardQueries";
 
 const getRangeDays = (range) => {
   if (range === "Last 7 days") return 7;
@@ -68,7 +71,9 @@ const BreakdownCard = ({ icon, title, items, emptyText }) => (
     {items.length ? (
       <InsightList items={items} />
     ) : (
-      <p className="mt-5 text-sm leading-6 text-(--secondary-text)">{emptyText}</p>
+      <p className="mt-5 text-sm leading-6 text-(--secondary-text)">
+        {emptyText}
+      </p>
     )}
   </DashboardCard>
 );
@@ -76,64 +81,62 @@ const BreakdownCard = ({ icon, title, items, emptyText }) => (
 const Analytics = () => {
   const { sortid } = useParams();
   const navigate = useNavigate();
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [destination, setDestination] = useState("");
+  const {
+    data: result,
+    isLoading: loading,
+    isFetching,
+    error: queryError,
+  } = useLinkAnalytics(sortid);
+  const error = queryError
+    ? queryError.response?.data?.message ||
+      queryError.response?.data?.error ||
+      "We could not load this link analytics."
+    : "";
+  const destination = result?.url?.redirectUrl || result?.redirectUrl || "";
   const [range, setRange] = useState("Last 28 days");
   const [page, setPage] = useState(1);
   const pageSize = 8;
-
-  useEffect(() => {
-    let active = true;
-    Promise.all([
-      instance.get(`/urls/${sortid}/analytics`),
-      fetchUrls().catch(() => []),
-    ])
-      .then(([response, urls]) => {
-        if (active) {
-          setResult(response.data);
-          setDestination(
-            response.data.redirectUrl ||
-              urls.find((url) => url.shortID === sortid)?.redirectUrl ||
-              "",
-          );
-        }
-      })
-      .catch((requestError) => {
-        if (active)
-          setError(
-            requestError.response?.data?.message ||
-              requestError.response?.data?.error ||
-              "We could not load this link analytics.",
-          );
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [sortid]);
 
   const visits = useMemo(
     () => (Array.isArray(result?.visitHistory) ? result.visitHistory : []),
     [result],
   );
-  const linkVisits = useMemo(() => visits.filter((visit) => visit.source !== "qr"), [visits]);
-  const qrVisits = useMemo(() => visits.filter((visit) => visit.source === "qr"), [visits]);
+  const linkVisits = useMemo(
+    () => visits.filter((visit) => visit.source !== "qr"),
+    [visits],
+  );
+  const qrVisits = useMemo(
+    () => visits.filter((visit) => visit.source === "qr"),
+    [visits],
+  );
   const orderedVisits = useMemo(
-    () => [...visits].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
+    () =>
+      [...visits].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)),
     [visits],
   );
   const latest = orderedVisits[0] || null;
   const shortUrl = getShortUrl({ ...result, shortID: sortid });
-  const chartData = useMemo(() => buildChartData(visits, range), [range, visits]);
-  const countryItems = useMemo(() => aggregateVisitField(visits, "country"), [visits]);
-  const deviceItems = useMemo(() => aggregateVisitField(visits, "deviceType"), [visits]);
-  const browserItems = useMemo(() => aggregateVisitField(visits, "browser"), [visits]);
+  const chartData = useMemo(
+    () => buildChartData(visits, range),
+    [range, visits],
+  );
+  const countryItems = useMemo(
+    () => aggregateVisitField(visits, "country"),
+    [visits],
+  );
+  const deviceItems = useMemo(
+    () => aggregateVisitField(visits, "deviceType"),
+    [visits],
+  );
+  const browserItems = useMemo(
+    () => aggregateVisitField(visits, "browser"),
+    [visits],
+  );
   const osItems = useMemo(() => aggregateVisitField(visits, "os"), [visits]);
-  const referrerItems = useMemo(() => aggregateVisitField(visits, "referrer"), [visits]);
+  const referrerItems = useMemo(
+    () => aggregateVisitField(visits, "referrer"),
+    [visits],
+  );
   const pagedVisits = orderedVisits.slice(
     (page - 1) * pageSize,
     page * pageSize,
@@ -159,6 +162,11 @@ const Analytics = () => {
 
   return (
     <div className="mx-auto max-w-275">
+      <p className="mb-2 text-xs text-(--secondary-text)" role="status">
+        {isFetching
+          ? "Updating analytics…"
+          : "Analytics refresh approximately every minute."}
+      </p>
       <PageIntro
         eyebrow="Link analytics"
         title={`ekurl.in/${sortid}`}
@@ -393,7 +401,11 @@ const Analytics = () => {
                     </td>
                     <td className="px-4 py-3.5 text-sm text-(--secondary-text)">
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-(--surface-soft) px-2 py-1 text-xs font-medium text-(--primary-text)">
-                        {visit.source === "qr" ? <QrCode className="h-3.5 w-3.5" aria-hidden="true" /> : <Link2 className="h-3.5 w-3.5" aria-hidden="true" />}
+                        {visit.source === "qr" ? (
+                          <QrCode className="h-3.5 w-3.5" aria-hidden="true" />
+                        ) : (
+                          <Link2 className="h-3.5 w-3.5" aria-hidden="true" />
+                        )}
                         {visit.source === "qr" ? "QR scan" : "Link click"}
                       </span>
                     </td>

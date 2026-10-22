@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   BarChart3,
   ChevronDown,
@@ -29,7 +29,6 @@ import {
   StatCard,
 } from "../../components/dashboard/DashboardPrimitives";
 import {
-  fetchUrlsWithAnalytics,
   flattenVisits,
   formatCompact,
   formatRelativeTime,
@@ -39,15 +38,21 @@ import {
   aggregateVisitField,
 } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
-import { Reveal, Stagger, StaggerItem } from "../../components/MotionPrimitives";
+import { useDashboardLinks } from "../../lib/dashboardQueries";
+import {
+  Reveal,
+  Stagger,
+  StaggerItem,
+} from "../../components/MotionPrimitives";
 
 const buildChartData = (urls, days) => {
   const now = new Date();
+  const visits = flattenVisits(urls);
   const points = Array.from({ length: 14 }, (_, index) => {
     const date = new Date(now);
     date.setDate(now.getDate() - (13 - index));
     const key = date.toISOString().slice(0, 10);
-    const matching = flattenVisits(urls).filter(
+    const matching = visits.filter(
       (visit) => new Date(visit.timestamp).toISOString().slice(0, 10) === key,
     );
     const total = matching.length;
@@ -65,45 +70,24 @@ const buildChartData = (urls, days) => {
 
 const DashboardHome = () => {
   const navigate = useNavigate();
-  const { openCreateLink, createdVersion } = useCreateLinkModal();
-  const [urls, setUrls] = useState([]);
-  const [loadedVersion, setLoadedVersion] = useState(-1);
-  const [loadError, setLoadError] = useState("");
+  const { openCreateLink } = useCreateLinkModal();
+  const {
+    data: urls = [],
+    isLoading: loading,
+    isFetching,
+    error,
+  } = useDashboardLinks();
+  const loadError = error
+    ? error.response?.data?.message || "We could not load your links right now."
+    : "";
   const [range, setRange] = useState("Last 28 days");
   const [linkSearch, setLinkSearch] = useState("");
   const user = getStoredUser();
 
-  useEffect(() => {
-    let active = true;
-    fetchUrlsWithAnalytics()
-      .then((data) => {
-        if (active) {
-          setUrls(data);
-          setLoadError("");
-          setLoadedVersion(createdVersion);
-        }
-      })
-      .catch((error) => {
-        if (active) {
-          setUrls([]);
-          setLoadError(error.response?.data?.message || "We could not load your links right now.");
-          setLoadedVersion(createdVersion);
-        }
-      })
-    return () => {
-      active = false;
-    };
-  }, [createdVersion]);
-
-  const loading = loadedVersion !== createdVersion;
-
   const visits = useMemo(() => flattenVisits(urls), [urls]);
   const totalClicks = urls.reduce((sum, url) => sum + getClicks(url), 0);
   const activeUrls = urls.filter((url) => url.status === "active").length;
-  const chartData = useMemo(
-    () => buildChartData(urls, range),
-    [urls, range],
-  );
+  const chartData = useMemo(() => buildChartData(urls, range), [urls, range]);
   const filteredLinks = urls
     .filter((url) =>
       `${url.shortID} ${url.redirectUrl}`
@@ -116,13 +100,30 @@ const DashboardHome = () => {
     .slice(0, 5);
   const recentClicks = `${formatCompact(totalClicks)} tracked visits`;
   const avgClicks = activeUrls ? Math.round(totalClicks / activeUrls) : 0;
-  const countryItems = useMemo(() => aggregateVisitField(visits, "country"), [visits]);
-  const deviceItems = useMemo(() => aggregateVisitField(visits, "deviceType"), [visits]);
-  const browserItems = useMemo(() => aggregateVisitField(visits, "browser"), [visits]);
-  const referrerItems = useMemo(() => aggregateVisitField(visits, "referrer"), [visits]);
+  const countryItems = useMemo(
+    () => aggregateVisitField(visits, "country"),
+    [visits],
+  );
+  const deviceItems = useMemo(
+    () => aggregateVisitField(visits, "deviceType"),
+    [visits],
+  );
+  const browserItems = useMemo(
+    () => aggregateVisitField(visits, "browser"),
+    [visits],
+  );
+  const referrerItems = useMemo(
+    () => aggregateVisitField(visits, "referrer"),
+    [visits],
+  );
 
   return (
     <div className="mx-auto max-w-360">
+      <p className="mb-2 text-xs text-(--secondary-text)" role="status">
+        {isFetching && !loading
+          ? "Updating analytics…"
+          : "Analytics refresh approximately every minute."}
+      </p>
       <Reveal className="mb-7 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <div className="flex items-center gap-3">
@@ -164,40 +165,82 @@ const DashboardHome = () => {
       </Reveal>
 
       {loadError && (
-        <p role="alert" className="mb-4 rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)">
+        <p
+          role="alert"
+          className="mb-4 rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-(--danger)"
+        >
           {loadError}
         </p>
       )}
 
       <Stagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StaggerItem><StatCard
-          icon={Link2}
-          label="Total links"
-          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : urls.length}
-          helper={loading ? <LoadingBlock className="mt-2 h-3 w-28" /> : `${activeUrls} currently active`}
-        /></StaggerItem>
-        <StaggerItem><StatCard
-          icon={Zap}
-          label="Total clicks"
-          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : formatCompact(totalClicks)}
-          helper={recentClicks}
-          tone="gold"
-        /></StaggerItem>
-        <StaggerItem><StatCard
-          icon={Users}
-          label="Unique visitors"
-          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : "Not available"}
-          helper="Not collected by current API"
-        /></StaggerItem>
-        <StaggerItem><StatCard
-          icon={BarChart3}
-          label="Avg. clicks / active link"
-          value={loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : activeUrls ? formatCompact(avgClicks) : "Not available"}
-          helper="Derived from recorded visits"
-        /></StaggerItem>
+        <StaggerItem>
+          <StatCard
+            icon={Link2}
+            label="Total links"
+            value={
+              loading ? <LoadingBlock className="mt-2 h-8 w-14" /> : urls.length
+            }
+            helper={
+              loading ? (
+                <LoadingBlock className="mt-2 h-3 w-28" />
+              ) : (
+                `${activeUrls} currently active`
+              )
+            }
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            icon={Zap}
+            label="Total clicks"
+            value={
+              loading ? (
+                <LoadingBlock className="mt-2 h-8 w-14" />
+              ) : (
+                formatCompact(totalClicks)
+              )
+            }
+            helper={recentClicks}
+            tone="gold"
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            icon={Users}
+            label="Unique visitors"
+            value={
+              loading ? (
+                <LoadingBlock className="mt-2 h-8 w-14" />
+              ) : (
+                "Not available"
+              )
+            }
+            helper="Not collected by current API"
+          />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard
+            icon={BarChart3}
+            label="Avg. clicks / active link"
+            value={
+              loading ? (
+                <LoadingBlock className="mt-2 h-8 w-14" />
+              ) : activeUrls ? (
+                formatCompact(avgClicks)
+              ) : (
+                "Not available"
+              )
+            }
+            helper="Derived from recorded visits"
+          />
+        </StaggerItem>
       </Stagger>
 
-      <Reveal delay={0.05} className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,.95fr)]">
+      <Reveal
+        delay={0.05}
+        className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,.95fr)]"
+      >
         <DashboardCard className="p-4 sm:p-5">
           <SectionHeading
             icon={BarChart3}
@@ -226,7 +269,10 @@ const DashboardHome = () => {
         <CountryCard items={countryItems} loading={loading} />
       </Reveal>
 
-      <Reveal delay={0.08} className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.2fr)_minmax(300px,.95fr)]">
+      <Reveal
+        delay={0.08}
+        className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1.2fr)_minmax(300px,.95fr)]"
+      >
         <DashboardCard className="p-4 sm:p-5">
           <SectionHeading
             icon={Zap}
@@ -290,29 +336,29 @@ const DashboardHome = () => {
             </div>
           ) : (
             <div className="mt-4 divide-y divide-(--border)">
-            {latestVisits.map((visit) => (
-              <div key={visit._id} className="flex items-center gap-3 py-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-(--secondary)/65 text-(--primary-deep)">
-                  <Globe2 className="h-3.5 w-3.5" aria-hidden="true" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-(--primary-text)">
-                    New click on {visit.url?.shortID || "your link"}
-                  </p>
-                  <p className="truncate text-[11px] text-(--secondary-text)">
-                    {visit.url?.redirectUrl || "Visitor details unavailable"}
-                  </p>
+              {latestVisits.map((visit) => (
+                <div key={visit._id} className="flex items-center gap-3 py-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-(--secondary)/65 text-(--primary-deep)">
+                    <Globe2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-(--primary-text)">
+                      New click on {visit.url?.shortID || "your link"}
+                    </p>
+                    <p className="truncate text-[11px] text-(--secondary-text)">
+                      {visit.url?.redirectUrl || "Visitor details unavailable"}
+                    </p>
+                  </div>
+                  <span className="whitespace-nowrap text-[10px] text-(--secondary-text)">
+                    {formatRelativeTime(visit.timestamp)}
+                  </span>
                 </div>
-                <span className="whitespace-nowrap text-[10px] text-(--secondary-text)">
-                  {formatRelativeTime(visit.timestamp)}
-                </span>
-              </div>
-            ))}
-            {!latestVisits.length && (
-              <p className="py-8 text-center text-sm text-(--secondary-text)">
-                No click activity yet.
-              </p>
-            )}
+              ))}
+              {!latestVisits.length && (
+                <p className="py-8 text-center text-sm text-(--secondary-text)">
+                  No click activity yet.
+                </p>
+              )}
             </div>
           )}
         </DashboardCard>

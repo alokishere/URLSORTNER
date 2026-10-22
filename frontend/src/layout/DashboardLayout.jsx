@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   Bell,
@@ -19,10 +19,12 @@ import {
 } from "lucide-react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import instance from "../axios";
-import { fetchRecentActivity, formatRelativeTime, getInitials } from "../lib/dashboardData";
+import { formatRelativeTime, getInitials } from "../lib/dashboardData";
 import { cx } from "../components/dashboard/classNames";
 import CreateLinkProvider from "../components/dashboard/CreateLinkProvider";
 import { useAuth } from "../auth/authStore";
+
+import { useRecentActivity } from "../lib/dashboardQueries";
 
 const navItems = [
   { to: "/dashboard", label: "Overview", icon: Home, end: true },
@@ -37,8 +39,7 @@ const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [activityOpen, setActivityOpen] = useState(false);
-  const [recentActivity, setRecentActivity] = useState([]);
-  const [activityLoading, setActivityLoading] = useState(true);
+  const { data: recentActivity = [], isLoading: activityLoading, error: activityError } = useRecentActivity(6);
   const [query, setQuery] = useState("");
   const { user, clearSession } = useAuth();
   const [notice, setNotice] = useState(() => {
@@ -48,14 +49,6 @@ const DashboardLayout = () => {
   });
   const reduceMotion = useReducedMotion();
   const navigate = useNavigate();
-  useEffect(() => {
-    let active = true;
-    fetchRecentActivity(6)
-      .then((items) => { if (active) setRecentActivity(items); })
-      .catch(() => { if (active) setRecentActivity([]); })
-      .finally(() => { if (active) setActivityLoading(false); });
-    return () => { active = false; };
-  }, []);
   const hasNewActivity = recentActivity.length > 0;
   const signOut = async () => {
     try {
@@ -240,7 +233,7 @@ const DashboardLayout = () => {
             </button>
             {activityOpen && <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-[min(23rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-(--border) bg-(--surface) shadow-xl shadow-black/10">
               <div className="flex items-center justify-between border-b border-(--border) px-4 py-3"><div><p className="text-sm font-bold text-(--primary-text)">Recent activity</p><p className="mt-0.5 text-xs text-(--secondary-text)">Clicks, scans, and workspace changes</p></div><Bell className="h-4 w-4 text-(--secondary-text)" aria-hidden="true" /></div>
-              {activityLoading ? <div className="space-y-3 p-4"><div className="h-10 animate-pulse rounded-xl bg-(--surface-soft)" /><div className="h-10 animate-pulse rounded-xl bg-(--surface-soft)" /></div> : recentActivity.length ? <div className="max-h-80 overflow-y-auto">{recentActivity.map((item) => <button key={item.id} type="button" onClick={() => { setActivityOpen(false); navigate(item.shortID ? `/dashboard/links/${item.shortID}/analytics` : "/dashboard/notifications"); }} className="focus-ring flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-(--surface-soft)"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-(--secondary)/65 text-(--primary-deep)">{item.type === "qr_scan" ? <QrCode className="h-4 w-4" aria-hidden="true" /> : item.type === "link_click" ? <Link2 className="h-4 w-4" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}</span><span className="min-w-0 flex-1"><strong className="block text-xs text-(--primary-text)">{item.title}</strong><span className="block truncate text-[11px] text-(--secondary-text)">{item.detail}</span></span><span className="shrink-0 text-[10px] text-(--secondary-text)">{formatRelativeTime(item.timestamp)}</span></button>)}</div> : <p className="p-5 text-center text-sm text-(--secondary-text)">No recent activity yet.</p>}
+              {activityError ? <p role="alert" className="p-5 text-center text-sm text-(--danger)">Could not load recent activity.</p> : activityLoading ? <div className="space-y-3 p-4"><div className="h-10 animate-pulse rounded-xl bg-(--surface-soft)" /><div className="h-10 animate-pulse rounded-xl bg-(--surface-soft)" /></div> : recentActivity.length ? <div className="max-h-80 overflow-y-auto">{recentActivity.map((item) => <button key={item.id} type="button" onClick={() => { setActivityOpen(false); navigate(item.shortID ? `/dashboard/links/${item.shortID}/analytics` : "/dashboard/notifications"); }} className="focus-ring flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left hover:bg-(--surface-soft)"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-(--secondary)/65 text-(--primary-deep)">{item.type === "qr_scan" ? <QrCode className="h-4 w-4" aria-hidden="true" /> : item.type === "link_click" ? <Link2 className="h-4 w-4" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}</span><span className="min-w-0 flex-1"><strong className="block text-xs text-(--primary-text)">{item.title}</strong><span className="block truncate text-[11px] text-(--secondary-text)">{item.detail}</span></span><span className="shrink-0 text-[10px] text-(--secondary-text)">{formatRelativeTime(item.timestamp)}</span></button>)}</div> : <p className="p-5 text-center text-sm text-(--secondary-text)">No recent activity yet.</p>}
               <button type="button" onClick={() => { setActivityOpen(false); navigate("/dashboard/notifications"); }} className="focus-ring flex min-h-11 w-full cursor-pointer items-center justify-center border-t border-(--border) text-xs font-semibold text-(--primary-deep) hover:bg-(--surface-soft)">View all notifications</button>
             </div>}
             </div>
