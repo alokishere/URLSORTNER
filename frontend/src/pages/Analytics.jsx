@@ -161,7 +161,7 @@ const Analytics = () => {
     <div className="mx-auto max-w-275">
       <PageIntro
         eyebrow="Link analytics"
-        title={`u.alokdev.in/${sortid}`}
+        title={`ekurl.in/${sortid}`}
         description="Recorded visits for this short link. A visit ID identifies an event, not a verified unique person."
         actions={
           <>

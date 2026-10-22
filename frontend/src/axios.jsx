@@ -7,7 +7,7 @@ const isLocal = host === 'localhost' || host === '127.0.0.1';
 const instance = axios.create({
   baseURL: isLocal
     ? 'http://localhost:3000'
-    : 'https://u.alokdev.in',
+    : 'https://ekurl.in',
 
   withCredentials: true,
 });
@@ -15,6 +15,6 @@ const instance = axios.create({
 
 instance.defaults.redirecturl = isLocal
   ? 'localhost:3000'
-  : 'u.alokdev.in';
+  : 'ekurl.in';
 
 export default instance;

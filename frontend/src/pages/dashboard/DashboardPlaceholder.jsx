@@ -160,7 +160,7 @@ export const AnalyticsOverview = () => {
               </span>
               <span className="min-w-0 flex-1">
                 <strong className="block truncate text-sm text-(--primary-text)">
-                  u.alokdev.in/{url.shortID}
+                  ekurl.in/{url.shortID}
                 </strong>
                 <span className="block truncate text-xs text-(--secondary-text)">
                   {url.redirectUrl}

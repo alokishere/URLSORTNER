@@ -63,7 +63,7 @@ const QRCodePage = () => {
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-(--secondary)/65 text-(--primary-deep)"><QrCode className="h-5 w-5" aria-hidden="true" /></span>
                 <StatusPill tone="success">Ready</StatusPill>
               </div>
-              <p className="mt-5 truncate text-sm font-bold text-(--primary-text)">u.alokdev.in/{link.shortID}</p>
+              <p className="mt-5 truncate text-sm font-bold text-(--primary-text)">ekurl.in/{link.shortID}</p>
               <p className="mt-1 line-clamp-2 min-h-10 text-xs leading-5 text-(--secondary-text)">{link.title || link.redirectUrl}</p>
               <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl bg-(--surface-soft)/70 p-3">
                 <div><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-(--secondary-text)">QR scans</p><p className="mt-1 text-lg font-bold text-(--primary-text)">{formatCompact(link.qrScans || 0)}</p></div>

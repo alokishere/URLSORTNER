@@ -424,7 +424,7 @@ async function getRecentActivity(req, res) {
         linkId: event.urlId,
         shortID: url?.shortID || "",
         title: isQrScan ? "QR code scanned" : "Short link clicked",
-        detail: url?.shortID ? `u.alokdev.in/${url.shortID}` : "A link in your workspace",
+        detail: url?.shortID ? `ekurl.in/${url.shortID}` : "A link in your workspace",
         source: event.source || "link",
       };
     });
@@ -435,7 +435,7 @@ async function getRecentActivity(req, res) {
       linkId: url._id,
       shortID: url.shortID,
       title: "Short link created",
-      detail: `u.alokdev.in/${url.shortID}`,
+      detail: `ekurl.in/${url.shortID}`,
       source: "workspace",
     }));
     const activity = [...eventItems, ...creationItems]
