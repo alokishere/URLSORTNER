@@ -1,7 +1,7 @@
 
 import axios from 'axios';
 
-const host = window.location.hostname;
+const host = typeof window === 'undefined' ? '' : window.location.hostname;
 const isLocal = host === 'localhost' || host === '127.0.0.1';
 const productionApiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://www.ekurl.in';
 

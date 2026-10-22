@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import instance from "../../axios";
+import { useAuth } from "../../auth/authStore";
 import { getInitials, getStoredUser } from "../../lib/dashboardData";
 import { Button, DashboardCard, PageIntro } from "../../components/dashboard/DashboardPrimitives";
 
@@ -98,6 +99,7 @@ const Notice = ({ tone = "success", children, onDismiss }) => {
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const { clearSession } = useAuth();
   const storedUser = getStoredUser();
   const userId = storedUser?.id || storedUser?._id;
   const initialProfile = useMemo(
@@ -136,8 +138,6 @@ const ProfilePage = () => {
       const response = await instance.put(`/user/update/${userId}`, {
         fullName: profile.fullName.trim(),
         email: profile.email.trim().toLowerCase(),
-        roles: storedUser?.roles || ["user"],
-        isActive: storedUser?.isActive ?? true,
       });
       const nextUser = { ...storedUser, ...(response.data?.user || {}), id: response.data?.user?.id || userId };
       localStorage.setItem("user", JSON.stringify(nextUser));
@@ -160,13 +160,11 @@ const ProfilePage = () => {
 
     setPasswordState({ loading: true, message: "", error: "" });
     try {
-      await instance.post("/user/login", { email: profile.email, password: passwords.current });
       const response = await instance.put(`/user/update/${userId}`, {
         fullName: profile.fullName.trim(),
         email: profile.email.trim().toLowerCase(),
         password: passwords.next,
-        roles: storedUser?.roles || ["user"],
-        isActive: storedUser?.isActive ?? true,
+        currentPassword: passwords.current,
       });
       const nextUser = { ...storedUser, ...(response.data?.user || {}), id: response.data?.user?.id || userId };
       localStorage.setItem("user", JSON.stringify(nextUser));
@@ -197,7 +195,7 @@ const ProfilePage = () => {
     setDeleteState({ loading: true, error: "" });
     try {
       await instance.delete(`/user/delete/${userId}`);
-      localStorage.removeItem("user");
+      clearSession();
       navigate("/", { replace: true });
     } catch (error) {
       setDeleteState({ loading: false, error: getApiMessage(error, "We could not delete your account right now.") });

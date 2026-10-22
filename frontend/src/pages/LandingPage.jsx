@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
@@ -38,12 +38,12 @@ const features = [
     icon: Zap,
     title: "Instant Shortening",
     description:
-      "Create clean links in one click with automatic titles and tags.",
+      "Create a short link from a long URL and copy it to share.",
   },
   {
     icon: BarChart3,
     title: "Detailed Analytics",
-    description: "Clicks, referrers, geography and devices in real time.",
+    description: "Review recorded clicks, QR scans, devices and referrers when available.",
   },
   {
     icon: Globe2,
@@ -53,7 +53,7 @@ const features = [
   {
     icon: ShieldCheck,
     title: "Secure & Reliable",
-    description: "99.99% uptime, SSL by default and spam protection.",
+    description: "Manage your links from your account and control their status.",
   },
 ];
 
@@ -62,59 +62,59 @@ const steps = [
     number: "01",
     icon: LinkIcon,
     title: "Paste URL",
-    description: "Drop in any long link. We clean it up automatically.",
+    description: "Paste a complete URL to create a shorter link.",
   },
   {
     number: "02",
     icon: Sparkles,
     title: "Create Short Link",
-    description: "Get a short URL, QR code and editable slug instantly.",
+    description: "Get a short URL; sign in to manage it and create a QR code.",
   },
   {
     number: "03",
     icon: BarChart3,
     title: "Track Performance",
-    description: "Watch clicks, sources and geography in real time.",
+    description: "Review recorded visits and available visitor details in your dashboard.",
   },
 ];
 
 const plans = [
   {
     name: "Free",
-    price: "$0",
-    description: "For trying short links.",
+    price: "Free",
+    description: "Create and manage short links.",
     features: [
-      "100 links / month",
-      "Basic click stats",
-      "Ek URL domain",
-      "QR codes",
+      "Create guest links",
+      "Link management with an account",
+      "Recorded click analytics",
+      "QR codes for your links",
     ],
     action: "Start for free",
   },
   {
     name: "Pro",
-    price: "$12",
-    description: "For creators and growth.",
+    price: "Planned",
+    description: "A possible future plan for creators.",
     features: [
-      "10,000 links / month",
-      "Full analytics + history",
-      "1 custom domain",
-      "UTM builder + API",
+      "Paid features not yet available",
+      "Custom domains planned",
+      "Campaign tools planned",
+      "Pricing not yet available",
     ],
-    action: "Start 14-day trial",
+    action: "Create an account",
     featured: true,
   },
   {
     name: "Business",
-    price: "$49",
-    description: "For teams at scale.",
+    price: "Planned",
+    description: "A possible future plan for teams.",
     features: [
-      "Unlimited links",
-      "Team workspaces + SSO",
-      "Multiple domains",
-      "Priority support + SLA",
+      "Team workspaces planned",
+      "Multiple domains planned",
+      "Team features not yet available",
+      "Pricing not yet available",
     ],
-    action: "Talk to sales",
+    action: "Create an account",
   },
 ];
 
@@ -127,7 +127,7 @@ const faqItems = [
   {
     question: "Can I use my own domain?",
     answer:
-      "Yes. Custom domains are available on paid plans with SSL and guided DNS setup.",
+      "Custom domains are planned and are not currently available.",
   },
   {
     question: "What analytics do I get?",
@@ -135,14 +135,14 @@ const faqItems = [
       "You can review clicks, visit history, locations, devices, browsers, and referrers when the backend records them.",
   },
   {
-    question: "Is there a free plan?",
+    question: "Can I try Ek URL without signing up?",
     answer:
-      "Yes. The free plan is designed for trying short links before you need advanced controls.",
+      "Yes. You can create guest links without an account; your guest links are stored in this browser.",
   },
   {
     question: "Can I manage links as a team?",
     answer:
-      "Team workspaces are represented in the Business plan and can be enabled when backend support is available.",
+      "Team workspaces are planned and are not currently available.",
   },
 ];
 
@@ -331,7 +331,12 @@ const LandingPage = () => {
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
-  const [guestLinks, setGuestLinks] = useState(getGuestLinks);
+  const [guestLinks, setGuestLinks] = useState([]);
+  useEffect(() => {
+    // Browser storage is unavailable to the prerenderer; read it after hydration.
+    const timer = setTimeout(() => setGuestLinks(getGuestLinks()), 0);
+    return () => clearTimeout(timer);
+  }, []);
   const [storageError, setStorageError] = useState("");
   const [openFaq, setOpenFaq] = useState(0);
   const requestInFlight = useRef(false);
@@ -484,8 +489,7 @@ const LandingPage = () => {
               <span className="block">Real possibilities.</span>
             </h1>
             <p className="mt-5 max-w-[520px] text-pretty text-base leading-7 text-(--secondary-text) sm:text-lg">
-              Turn long URLs into clean, memorable links with powerful
-              analytics.
+              Ek URL is a URL shortener for creating shareable links and reviewing recorded clicks.
             </p>
             <form
               onSubmit={shortenUrl}
@@ -673,7 +677,7 @@ const LandingPage = () => {
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Check className="h-3.5 w-3.5" aria-hidden="true" />
-                Enterprise-ready security
+                Account-based link management
               </span>
             </div>
           </Reveal>
@@ -767,14 +771,13 @@ const LandingPage = () => {
                 Your brand. Shorter links.
               </h2>
               <p className="mt-5 max-w-lg text-base leading-7 text-(--secondary-text)">
-                Replace generic short URLs with your own domain. Every click
-                reinforces trust and lifts click-through rates.
+                Custom domains are planned. The preview shows a possible future experience.
               </p>
               <div className="mt-7 space-y-3 text-sm text-(--primary-text)">
                 {[
-                  "Free SSL and automatic setup",
-                  "Unlimited branded slugs on paid plans",
-                  "Team-wide link consistency",
+                  "Branded domains are not yet available",
+                  "Preview shown for illustration",
+                  "Create short links with Ek URL today",
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-2.5">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-(--surface-soft) text-(--primary-deep)">
@@ -802,7 +805,7 @@ const LandingPage = () => {
                   <p className="text-xs font-semibold">Branded preview</p>
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-(--surface-soft) px-2 py-1 text-[9px] text-(--success)">
                     <i className="h-1.5 w-1.5 rounded-full bg-(--success)" />
-                    Connected
+                    Preview
                   </span>
                 </div>
                 <div className="mt-5 flex items-center gap-3 rounded-xl border border-(--border) p-3.5">
@@ -835,7 +838,7 @@ const LandingPage = () => {
                 </div>
                 <div className="mt-3 inline-flex items-center gap-2 text-[10px] text-(--secondary-text)">
                   <LockKeyhole className="h-3.5 w-3.5" aria-hidden="true" />
-                  SSL secured · DNS verified in 42s
+                  Illustrative example
                 </div>
               </div>
             </Reveal>
@@ -855,7 +858,7 @@ const LandingPage = () => {
                 Simple pricing that scales
               </h2>
               <p className="mt-4 text-sm leading-6 text-(--secondary-text)">
-                Plan limits are illustrative until billing is connected.
+                The plans and prices below are illustrative. Billing and paid features are not yet available.
               </p>
             </Reveal>
             <Stagger className="mx-auto mt-10 grid max-w-[940px] gap-4 lg:grid-cols-3">
@@ -868,7 +871,7 @@ const LandingPage = () => {
                     <h3 className="text-sm font-semibold">{plan.name}</h3>
                     {plan.featured && (
                       <span className="rounded-full bg-(--surface)/12 px-2 py-1 text-[9px] font-medium">
-                        Most popular
+                        Illustrative plan
                       </span>
                     )}
                   </div>
@@ -879,7 +882,7 @@ const LandingPage = () => {
                     <span
                       className={`ml-1 text-xs font-normal tracking-normal ${plan.featured ? "text-(--surface)/60" : "text-(--secondary-text)"}`}
                     >
-                      /month
+                      {plan.price === "Free" ? "" : " · not available"}
                     </span>
                   </p>
                   <p
@@ -976,7 +979,7 @@ const LandingPage = () => {
                 Turn your links into opportunities.
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-(--secondary-text)">
-                Start free in seconds. Upgrade when your audience grows.
+                Start free in seconds. Sign in to manage links and review recorded clicks.
               </p>
               <div className="mt-7 flex flex-col items-center justify-center gap-2 sm:flex-row">
                 <motion.button
@@ -1006,7 +1009,7 @@ const LandingPage = () => {
           <div className="max-w-xs">
             <Brand />
             <p className="mt-4 text-sm leading-6 text-(--secondary-text)">
-              Clean links, honest analytics, and domains you own.
+              Clean links and useful analytics for the links you share.
             </p>
             <div className="mt-5 flex items-center gap-3 text-(--secondary-text)">
               <Link2 className="h-4 w-4" aria-hidden="true" />

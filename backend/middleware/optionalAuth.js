@@ -8,7 +8,7 @@ async function optionalAuth(req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id || decoded._id);
-    if (!user || user.isActive === false) {
+    if (!user || user.isActive === false || (decoded.sv ?? 0) !== (user.sessionVersion ?? 0)) {
       return res.status(401).json({ error: "Unauthorized - User not found" });
     }
     req.user = user;

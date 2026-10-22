@@ -1,0 +1,11 @@
+{
+  "name": "Ek URL",
+  "short_name": "Ek URL",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafbf8",
+  "theme_color": "#fafbf8",
+  "icons": [
+    { "src": "/favIcon.png", "sizes": "1254x1254", "type": "image/png" }
+  ]
+}

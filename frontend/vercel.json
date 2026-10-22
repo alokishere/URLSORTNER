@@ -1,7 +1,159 @@
 {
+  "headers": [
+    {
+      "source": "/dashboard",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
+    },
+    {
+      "source": "/dashboard/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
+    },
+    {
+      "source": "/login",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
+    },
+    {
+      "source": "/register",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
+    },
+    {
+      "source": "/create",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
+    },
+    {
+      "source": "/analytics/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/dashboard",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/links",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/create",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/analytics",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/links/:sortid/analytics",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/qr-codes",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/bio-pages",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/domains",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/campaigns",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/tools",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/integrations",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/settings",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/settings/profile",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/billing",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dashboard/notifications",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/register",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/create",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/analytics/:sortid",
       "destination": "/index.html"
     }
   ]
