@@ -40,15 +40,7 @@ app.use(cookieParser());
 app.use("/urls", urlRouter);
 app.use("/user", userRouter);
 app.get("/", (req, res) => {
-  res.send(
-    `<h1>Welcome to the URL Shortener API</h1>
-    <p>Use the following endpoints:</p>
-    <ul>
-      <li>POST /urls - Create a new shortened URL</li>
-      <li>GET /urls/:shortUrl - Redirect to the original URL</li>
-      <li>GET /urls - Get all shortened URLs</li>
-    </ul> `,
-  );
+  return res.redirect(302, "https://app.ekurl.in");
 });
 app.get("/:shortID", getRedirectUrl);
 
