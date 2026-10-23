@@ -18,11 +18,10 @@ import {
 import { useNavigate } from "react-router-dom";
 import instance from "../../axios";
 import { useAuth } from "../../auth/authStore";
+import GoogleSignInButton from "../../auth/GoogleSignInButton";
 import { getInitials, getStoredUser } from "../../lib/dashboardData";
 import { Button, DashboardCard, PageIntro } from "../../components/dashboard/DashboardPrimitives";
-
-const getApiMessage = (error, fallback) =>
-  error?.response?.data?.error || error?.response?.data?.message || fallback;
+import { getApiErrorMessage } from "../../lib/apiErrors";
 
 const ProfileField = ({ id, label, value, onChange, type = "text", icon: Icon, error }) => (
   <div>
@@ -119,6 +118,7 @@ const ProfilePage = () => {
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState(initialProfile.email);
   const [forgotState, setForgotState] = useState({ loading: false, message: "", error: "" });
+  const [googleLinkState, setGoogleLinkState] = useState({ loading: false, message: "", error: "" });
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteState, setDeleteState] = useState({ loading: false, error: "" });
 
@@ -145,7 +145,7 @@ const ProfilePage = () => {
       setForgotEmail(nextUser.email || "");
       setProfileState({ loading: false, message: "Profile details saved.", error: "" });
     } catch (error) {
-      setProfileState({ loading: false, message: "", error: getApiMessage(error, "We could not save your profile right now.") });
+      setProfileState({ loading: false, message: "", error: getApiErrorMessage(error, "We could not save your profile right now.") });
     }
   };
 
@@ -171,7 +171,7 @@ const ProfilePage = () => {
       setPasswords({ current: "", next: "", confirm: "" });
       setPasswordState({ loading: false, message: "Password updated successfully.", error: "" });
     } catch (error) {
-      setPasswordState({ loading: false, message: "", error: getApiMessage(error, "We could not update your password. Check your current password and try again.") });
+      setPasswordState({ loading: false, message: "", error: getApiErrorMessage(error, "We could not update your password. Check your current password and try again.") });
     }
   };
 
@@ -186,7 +186,18 @@ const ProfilePage = () => {
       await instance.post("/user/forgot-password", { email: forgotEmail.trim().toLowerCase() });
       setForgotState({ loading: false, message: "If an account exists for that email, a reset link is on its way.", error: "" });
     } catch (error) {
-      setForgotState({ loading: false, message: "", error: getApiMessage(error, "The password reset service is not available yet. Add POST /user/forgot-password to enable it.") });
+      setForgotState({ loading: false, message: "", error: getApiErrorMessage(error, "We couldn't send the reset email right now. Please try again later.") });
+    }
+  };
+
+  const linkGoogleAccount = async (credential) => {
+    if (googleLinkState.loading) return;
+    setGoogleLinkState({ loading: true, message: "", error: "" });
+    try {
+      const response = await instance.post("/user/google/link", { credential });
+      setGoogleLinkState({ loading: false, message: response.data?.message || "Google account linked successfully.", error: "" });
+    } catch (error) {
+      setGoogleLinkState({ loading: false, message: "", error: getApiErrorMessage(error, "We could not link Google right now. Please try again.") });
     }
   };
 
@@ -198,7 +209,7 @@ const ProfilePage = () => {
       clearSession();
       navigate("/", { replace: true });
     } catch (error) {
-      setDeleteState({ loading: false, error: getApiMessage(error, "We could not delete your account right now.") });
+      setDeleteState({ loading: false, error: getApiErrorMessage(error, "We could not delete your account right now.") });
     }
   };
 
@@ -272,6 +283,23 @@ const ProfilePage = () => {
                 </Button>
               </div>
             </form>
+          </DashboardCard>
+
+          <DashboardCard id="google-sign-in" className="scroll-mt-24 p-5 sm:p-6">
+            <div className="border-b border-(--border) pb-5">
+              <div className="flex items-center gap-2">
+                <span className="flex h-9 w-9 items-center text-(--primary-deep)">
+                  <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <h2 className="text-base font-bold text-(--primary-text)">Google sign-in</h2>
+              </div>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-(--secondary-text)">Link Google only after you are signed in. We require the verified Google email to match this account and never merge accounts automatically.</p>
+            </div>
+            <div className="mt-5 space-y-4">
+              {googleLinkState.message && <Notice onDismiss={() => setGoogleLinkState((current) => ({ ...current, message: "" }))}>{googleLinkState.message}</Notice>}
+              {googleLinkState.error && <Notice tone="error" onDismiss={() => setGoogleLinkState((current) => ({ ...current, error: "" }))}>{googleLinkState.error}</Notice>}
+              <GoogleSignInButton onCredential={linkGoogleAccount} disabled={googleLinkState.loading} />
+            </div>
           </DashboardCard>
 
           <DashboardCard id="password" className="scroll-mt-24 p-5 sm:p-6">

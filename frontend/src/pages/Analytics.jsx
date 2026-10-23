@@ -16,6 +16,7 @@ import {
 import {
   Button,
   DashboardCard,
+  ErrorState,
   EmptyState,
   LoadingBlock,
   PageIntro,
@@ -29,6 +30,7 @@ import {
 } from "../lib/dashboardData";
 
 import { useLinkAnalytics } from "../lib/dashboardQueries";
+import { getQueryErrorMessage } from "../lib/apiErrors";
 
 const getRangeDays = (range) => {
   if (range === "Last 7 days") return 7;
@@ -86,12 +88,9 @@ const Analytics = () => {
     isLoading: loading,
     isFetching,
     error: queryError,
+    refetch,
   } = useLinkAnalytics(sortid);
-  const error = queryError
-    ? queryError.response?.data?.message ||
-      queryError.response?.data?.error ||
-      "We could not load this link analytics."
-    : "";
+  const error = queryError ? getQueryErrorMessage(queryError, "We could not load this link analytics.") : "";
   const destination = result?.url?.redirectUrl || result?.redirectUrl || "";
   const [range, setRange] = useState("Last 28 days");
   const [page, setPage] = useState(1);
@@ -142,6 +141,14 @@ const Analytics = () => {
     page * pageSize,
   );
   const totalPages = Math.max(1, Math.ceil(orderedVisits.length / pageSize));
+
+  if (error)
+    return (
+      <div className="mx-auto max-w-275">
+        <PageIntro eyebrow="Link analytics" title={`ekurl.in/${sortid}`} description="Recorded visits for this short link." actions={<Button variant="secondary" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4" aria-hidden="true" />Back</Button>} />
+        <DashboardCard><ErrorState description={error} onRetry={refetch} /></DashboardCard>
+      </div>
+    );
 
   if (loading)
     return (

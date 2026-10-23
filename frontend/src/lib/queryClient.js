@@ -7,7 +7,7 @@ export const queryClient = new QueryClient({
       gcTime: 5 * 60_000,
       refetchOnWindowFocus: false,
       retry: (count, error) =>
-        ![401, 403, 404].includes(error?.response?.status) && count < 1,
+        ![400, 401, 403, 404, 409, 422, 429].includes(error?.response?.status) && count < 1,
     },
   },
 });

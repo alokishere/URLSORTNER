@@ -5,6 +5,7 @@ import QRCodeModal from "../../components/QRCodeModal";
 import {
   Button,
   DashboardCard,
+  ErrorState,
   EmptyState,
   LoadingBlock,
   PageIntro,
@@ -14,6 +15,7 @@ import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModa
 import { formatCompact } from "../../lib/dashboardData";
 
 import { useDashboardLinks } from "../../lib/dashboardQueries";
+import { getQueryErrorMessage } from "../../lib/apiErrors";
 
 const QRCodePage = () => {
   const navigate = useNavigate();
@@ -22,13 +24,20 @@ const QRCodePage = () => {
     data: links = [],
     isLoading: loading,
     error: queryError,
+    refetch,
   } = useDashboardLinks();
-  const error = queryError
-    ? queryError.response?.data?.error || "We could not load your QR codes."
-    : "";
+  const error = queryError ? getQueryErrorMessage(queryError, "We could not load your QR codes.") : "";
   const [selectedLink, setSelectedLink] = useState(null);
 
   const closeModal = () => setSelectedLink(null);
+
+  if (error && !loading)
+    return (
+      <div className="mx-auto max-w-[1180px]">
+        <PageIntro eyebrow="Growth tools" title="QR codes" description="Generate print-ready QR codes and compare their scans with ordinary short-link clicks." actions={<Button onClick={openCreateLink}>Create short URL</Button>} />
+        <DashboardCard><ErrorState description={error} onRetry={refetch} /></DashboardCard>
+      </div>
+    );
 
   return (
     <div className="mx-auto max-w-[1180px]">

@@ -2,6 +2,7 @@ import { Bell, CheckCircle2, Link2, QrCode } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   DashboardCard,
+  ErrorState,
   EmptyState,
   LoadingBlock,
   PageIntro,
@@ -9,6 +10,7 @@ import {
 import { formatRelativeTime } from "../../lib/dashboardData";
 
 import { useRecentActivity } from "../../lib/dashboardQueries";
+import { getQueryErrorMessage } from "../../lib/apiErrors";
 
 const activityIcon = (type) =>
   type === "qr_scan" ? QrCode : type === "link_click" ? Link2 : CheckCircle2;
@@ -19,10 +21,17 @@ const NotificationsPage = () => {
     data: activity = [],
     isLoading: loading,
     error: queryError,
+    refetch,
   } = useRecentActivity(100);
-  const error = queryError
-    ? queryError.response?.data?.error || "We could not load recent activity."
-    : "";
+  const error = queryError ? getQueryErrorMessage(queryError, "We could not load recent activity.") : "";
+
+  if (error && !loading)
+    return (
+      <div className="mx-auto max-w-[900px]">
+        <PageIntro eyebrow="Workspace" title="Notifications" description="Recent link creation, direct clicks, and tracked QR scans in your workspace." />
+        <DashboardCard><ErrorState description={error} onRetry={refetch} /></DashboardCard>
+      </div>
+    );
 
   return (
     <div className="mx-auto max-w-[900px]">

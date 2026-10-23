@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  AlertTriangle,
   ArrowUpRight,
   Ban,
   Check,
@@ -202,6 +203,25 @@ export const EmptyState = ({
       {description}
     </p>
     {action && <div className="mt-4">{action}</div>}
+  </div>
+);
+
+export const ErrorState = ({
+  title = "We could not load this right now",
+  description = "Something went wrong while loading this area. Please try again.",
+  onRetry,
+}) => (
+  <div className="flex min-h-56 flex-col items-center justify-center px-6 py-10 text-center">
+    <span className="mb-4 flex h-12 w-12 items-center justify-center text-(--danger)">
+      <AlertTriangle className="h-5 w-5" aria-hidden="true" />
+    </span>
+    <h3 className="text-base font-semibold text-(--primary-text)">{title}</h3>
+    <p className="mt-1 max-w-sm text-sm leading-6 text-(--secondary-text)">{description}</p>
+    {onRetry && (
+      <button type="button" onClick={onRetry} className="focus-ring mt-4 inline-flex min-h-10 cursor-pointer items-center rounded-xl border border-(--border) px-4 text-sm font-semibold text-(--primary-text) hover:bg-(--surface-soft)">
+        Try again
+      </button>
+    )}
   </div>
 );
 

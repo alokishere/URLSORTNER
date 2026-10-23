@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail, ArrowRight, Link2 } from "lucide-react";
 import instance from "../axios";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { consumePostAuthIntent, migrateGuestLinks } from "../lib/guestLinks";
 import { useAuth } from "../auth/authStore";
+import { getApiErrorMessage } from "../lib/apiErrors";
 
 const Loginpage = () => {
   const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ const Loginpage = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { setAuthenticatedUser } = useAuth();
 
@@ -61,7 +63,7 @@ const Loginpage = () => {
           : null;
       navigate(safeRequested || intentPath || "/dashboard", { replace: true });
     } catch (error) {
-      setErrors({ form: error.response?.data?.error || "Sign in failed. Check your email and password." });
+      setErrors({ form: getApiErrorMessage(error, "Email or password is incorrect. Please try again.") });
     } finally {
       setIsLoading(false);
     }
@@ -119,6 +121,7 @@ const Loginpage = () => {
             </div>
 
             <form className="space-y-5" onSubmit={handleSubmit}>
+              {location.state?.resetSuccess && <p role="status" className="rounded-xl border border-[#b8d2b6] bg-[#e8f1e6] px-4 py-3 text-sm text-[#3f7655]">{location.state.resetSuccess}</p>}
               {errors.form && <p role="alert" className="rounded-xl border border-[#d9a79b] bg-[#f8e9e5] px-4 py-3 text-sm text-[#8b3a2b]">{errors.form}</p>}
               <div>
                 <label htmlFor="login-email" className="mb-2 block text-sm font-medium text-[#252823]">
@@ -174,6 +177,12 @@ const Loginpage = () => {
                     {errors.password}
                   </p>
                 )}
+              </div>
+
+              <div className="-mt-2 text-right">
+                <Link to="/forgot-password" className="text-sm font-semibold text-[#8FA28A] hover:text-[#74876f]">
+                  Forgot password?
+                </Link>
               </div>
 
               <button

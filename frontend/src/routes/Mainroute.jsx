@@ -3,6 +3,8 @@ import { Navigate, Route, Routes, useLocation, useParams } from "react-router-do
 import { AuthLoadingScreen } from "../auth/AuthContext";
 import { useAuth } from "../auth/authStore";
 import LandingPage from "../pages/LandingPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/ResetPasswordPage";
 
 const DashboardLayout = lazy(() => import("../layout/DashboardLayout"));
 const Analytics = lazy(() => import("../pages/Analytics"));
@@ -62,6 +64,8 @@ const Mainroute = () => (
       <Route path="/" element={<HomeRoute />} />
       <Route path="/login" element={<LegacyAuthRedirect mode="login" />} />
       <Route path="/register" element={<LegacyAuthRedirect mode="register" />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
         <Route index element={<DashboardHome />} />
         <Route path="links" element={<DashboardLinks />} />

@@ -13,6 +13,7 @@ import { useSearchParams } from "react-router-dom";
 import {
   Button,
   DashboardCard,
+  ErrorState,
   EmptyState,
   LinkTableSkeleton,
   LinkRow,
@@ -27,13 +28,14 @@ import QRCodeModal from "../../components/QRCodeModal";
 import { useDashboardLinks, keys, userIdFor } from "../../lib/dashboardQueries";
 import { queryClient } from "../../lib/queryClient";
 import { useAuth } from "../../auth/authStore";
+import { getApiErrorMessage } from "../../lib/apiErrors";
 
 const DashboardLinks = () => {
   const { openCreateLink } = useCreateLinkModal();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const { data: urls = [], isLoading: loading, error } = useDashboardLinks();
-  const loadError = error ? (error.response?.data?.message || "We could not load your links right now.") : "";
+  const { data: urls = [], isLoading: loading, error, refetch } = useDashboardLinks();
+  const loadError = error ? getApiErrorMessage(error, "We could not load your links right now.") : "";
   const setUrls = (updater) => queryClient.setQueryData(keys.overview(userIdFor(user)), (current) => current ? updater(current) : undefined);
   const [selected, setSelected] = useState([]);
   const [sort, setSort] = useState("created");
@@ -85,7 +87,7 @@ const DashboardLinks = () => {
       setEditing(null);
       announce("Link updated successfully.");
     } catch (error) {
-      setMutationError(error.response?.data?.error || "The link could not be updated.");
+      setMutationError(getApiErrorMessage(error, "The link could not be updated."));
     } finally {
       setMutationId("");
     }
@@ -100,7 +102,7 @@ const DashboardLinks = () => {
       setUrls((current) => current.map((item) => item._id === link._id ? { ...item, ...updated } : item));
       announce(nextStatus === "active" ? "Link unblocked." : "Link blocked. Redirects are now disabled.");
     } catch (error) {
-      announce(error.response?.data?.error || "The link status could not be changed.");
+      announce(getApiErrorMessage(error, "The link status could not be changed."));
     } finally {
       setMutationId("");
     }
@@ -117,7 +119,7 @@ const DashboardLinks = () => {
       setDeleting(null);
       announce("Link deleted successfully.");
     } catch (error) {
-      setMutationError(error.response?.data?.error || "The link could not be deleted.");
+      setMutationError(getApiErrorMessage(error, "The link could not be deleted."));
     } finally {
       setMutationId("");
     }
@@ -194,6 +196,14 @@ const DashboardLinks = () => {
       setSearchParams(nextParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
+  if (loadError && !loading)
+    return (
+      <div className="mx-auto max-w-[1440px]">
+        <PageIntro eyebrow="Link management" title="My links" description="Search, organize, and measure every short link in your workspace." actions={<Button onClick={openCreateLink}><Plus className="h-4 w-4" aria-hidden="true" />Create short URL</Button>} />
+        <DashboardCard><ErrorState description={loadError} onRetry={refetch} /></DashboardCard>
+      </div>
+    );
 
   return (
     <div className="mx-auto max-w-[1440px]">
@@ -333,8 +343,8 @@ const DashboardLinks = () => {
           </div>
         ) : (
           <EmptyState
-            title="No links match your search"
-            description="Try another keyword or create a new short link."
+            title={urls.length ? "No links match your search" : "You haven't created any links yet"}
+            description={urls.length ? "Try another keyword or create a new short link." : "Create your first short link to start tracking clicks."}
             action={
               <Button onClick={openCreateLink}>
                 <Plus className="h-4 w-4" aria-hidden="true" />

@@ -1,11 +1,9 @@
 import instance from "../axios";
 import { invalidateLinkQueries } from "./queryClient";
+import { getApiErrorMessage } from "./apiErrors";
 
 export const getRequestErrorMessage = (error, fallback) =>
-  error?.response?.data?.error ||
-  error?.response?.data?.message ||
-  error?.message ||
-  fallback;
+  getApiErrorMessage(error, fallback);
 
 export const createShortUrl = async (payload) => {
   const response = await instance.post("/urls/", payload);

@@ -24,6 +24,8 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
     passwordHash: { type: String, select: false },
+    resetPasswordTokenHash: { type: String, select: false },
+    resetPasswordExpiresAt: { type: Date, select: false },
     sessionVersion: { type: Number, default: 0 },
 
     authProviders: [
@@ -54,6 +56,11 @@ const userSchema = new mongoose.Schema(
 
 userSchema.index(
   { "authProviders.provider": 1, "authProviders.providerId": 1 },
+  { unique: true, sparse: true }
+);
+
+userSchema.index(
+  { resetPasswordTokenHash: 1 },
   { unique: true, sparse: true }
 );
 

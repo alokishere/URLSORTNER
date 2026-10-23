@@ -16,7 +16,9 @@ const corsOptions = {
   origin: [
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://localhost:5174",
     "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
     "https://alokurl.vercel.app",
     "https://ekurl.vercel.app",
     "https://ekurl.in",
@@ -41,7 +43,12 @@ app.use((req, res, next) => {
   return next();
 });
 
-app.use(express.json());
+app.use(express.json({ limit: "32kb" }));
+
+app.use((req, res, next) => {
+  res.set("Referrer-Policy", "no-referrer");
+  next();
+});
 
 app.use(cookieParser());
 
@@ -58,6 +65,22 @@ app.get("/", (req, res) => {
   return res.redirect(301, "https://app.ekurl.in");
 });
 app.get("/:shortID", getRedirectUrl);
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error);
+  const status = Number.isInteger(error?.status) && error.status >= 400 && error.status < 500
+    ? error.status
+    : 500;
+  console.error("Unhandled request error", {
+    method: req.method,
+    path: req.path,
+    status,
+    error: error?.message || "Unknown request error",
+  });
+  return res.status(status).json({
+    error: status === 400 ? "Request could not be processed." : "Something went wrong. Please try again.",
+  });
+});
 
 connectDB()
   .then(() => {

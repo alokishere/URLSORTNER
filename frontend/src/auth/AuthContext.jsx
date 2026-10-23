@@ -46,12 +46,13 @@ export const AuthProvider = ({ children }) => {
     const interceptor = instance.interceptors.response.use(
       undefined,
       (error) => {
-        if (
-          status === "authenticated" &&
-          error.response?.status === 401 &&
-          error.config?.url?.startsWith("/urls")
-        )
+        const requestUrl = error.config?.url || "";
+        const protectedRequest = ["/urls", "/user/session", "/user/update", "/user/delete"]
+          .some((prefix) => requestUrl.startsWith(prefix));
+        if (status === "authenticated" && error.response?.status === 401 && protectedRequest) {
+          sessionStorage.setItem("urlsortner_auth_error", "Your session has expired. Please sign in again.");
           clearSession();
+        }
         return Promise.reject(error);
       },
     );

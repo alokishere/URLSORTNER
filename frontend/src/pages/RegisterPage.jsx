@@ -12,6 +12,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import instance from "../axios";
 import { consumePostAuthIntent, migrateGuestLinks } from "../lib/guestLinks";
 import { useAuth } from "../auth/authStore";
+import { getApiErrorMessage } from "../lib/apiErrors";
 
 const RegisterPage = () => {
   const [fullName, setFullName] = useState("");
@@ -78,7 +79,7 @@ const RegisterPage = () => {
           : null;
       navigate(safeRequested || intentPath || "/dashboard", { replace: true });
     } catch (error) {
-      setErrors({ form: error.response?.data?.error || "Account creation failed. Please try again." });
+      setErrors({ form: getApiErrorMessage(error, "Account creation failed. Please try again.") });
     } finally {
       setIsLoading(false);
     }

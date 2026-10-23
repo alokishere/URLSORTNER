@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Button,
   DashboardCard,
+  ErrorState,
   EmptyState,
   LoadingBlock,
   PageIntro,
@@ -24,6 +25,7 @@ import { formatCompact, getClicks } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
 
 import { useDashboardLinks } from "../../lib/dashboardQueries";
+import { getQueryErrorMessage } from "../../lib/apiErrors";
 
 export const PlaceholderPage = ({
   icon: Icon = Sparkles,
@@ -90,8 +92,15 @@ export const PlaceholderPage = ({
 export const AnalyticsOverview = () => {
   const navigate = useNavigate();
   const { openCreateLink } = useCreateLinkModal();
-  const { data: urls = [], isLoading: loading, isFetching, error } = useDashboardLinks();
-  const loadError = error ? (error.response?.data?.message || "We could not load analytics right now.") : "";
+  const { data: urls = [], isLoading: loading, isFetching, error, refetch } = useDashboardLinks();
+  const loadError = error ? getQueryErrorMessage(error, "We could not load analytics right now.") : "";
+  if (loadError && !loading)
+    return (
+      <div className="mx-auto max-w-[1100px]">
+        <PageIntro eyebrow="Analytics" title="Link analytics" description="Choose a link to inspect its recorded visit history and performance." />
+        <DashboardCard><ErrorState description={loadError} onRetry={refetch} /></DashboardCard>
+      </div>
+    );
   return (
     <div className="mx-auto max-w-[1100px]">
       <PageIntro

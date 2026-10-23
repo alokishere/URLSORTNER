@@ -11,6 +11,7 @@ const instance = axios.create({
     : productionApiBaseUrl,
 
   withCredentials: true,
+  timeout: 15000,
 });
 
 

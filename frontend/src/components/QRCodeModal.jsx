@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check, Copy, Download, QrCode, RefreshCw, X } from "lucide-react";
 import { fetchShortUrlQrCode } from "../lib/urlApi";
+import { getApiErrorMessage } from "../lib/apiErrors";
 
 const QRCodeModal = ({ link, onClose }) => {
   const [qrData, setQrData] = useState(null);
@@ -32,7 +33,7 @@ const QRCodeModal = ({ link, onClose }) => {
       })
       .catch((requestError) => {
         if (!active) return;
-        setError(requestError.response?.data?.error || "We could not generate this QR code. Please try again.");
+        setError(getApiErrorMessage(requestError, "We could not generate this QR code. Please try again."));
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -58,7 +59,7 @@ const QRCodeModal = ({ link, onClose }) => {
       setQrData(await requestQrCode());
     } catch (requestError) {
       setQrData(null);
-      setError(requestError.response?.data?.error || "We could not generate this QR code. Please try again.");
+      setError(getApiErrorMessage(requestError, "We could not generate this QR code. Please try again."));
     } finally {
       requestInFlight.current = false;
       setLoading(false);

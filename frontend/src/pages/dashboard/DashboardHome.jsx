@@ -21,6 +21,7 @@ import {
 import {
   Button,
   DashboardCard,
+  ErrorState,
   EmptyState,
   LinkTableSkeleton,
   LoadingBlock,
@@ -39,6 +40,7 @@ import {
 } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
 import { useDashboardLinks } from "../../lib/dashboardQueries";
+import { getQueryErrorMessage } from "../../lib/apiErrors";
 import {
   Reveal,
   Stagger,
@@ -76,10 +78,9 @@ const DashboardHome = () => {
     isLoading: loading,
     isFetching,
     error,
+    refetch,
   } = useDashboardLinks();
-  const loadError = error
-    ? error.response?.data?.message || "We could not load your links right now."
-    : "";
+  const loadError = error ? getQueryErrorMessage(error, "We could not load your links right now.") : "";
   const [range, setRange] = useState("Last 28 days");
   const [linkSearch, setLinkSearch] = useState("");
   const user = getStoredUser();
@@ -116,6 +117,21 @@ const DashboardHome = () => {
     () => aggregateVisitField(visits, "referrer"),
     [visits],
   );
+
+  if (error && !loading)
+    return (
+      <div className="mx-auto max-w-360">
+        <Reveal className="mb-7 flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.17em] text-(--primary-deep)">Overview</p>
+            <h1 className="text-[2rem] font-bold tracking-[-0.045em] text-(--primary-text) sm:text-[2.45rem]">Your dashboard</h1>
+            <p className="mt-1.5 text-sm text-(--secondary-text) sm:text-base">Your link activity will appear here once the workspace loads.</p>
+          </div>
+          <Button onClick={openCreateLink}><Plus className="h-4 w-4" aria-hidden="true" />Create short URL</Button>
+        </Reveal>
+        <DashboardCard><ErrorState description={loadError} onRetry={refetch} /></DashboardCard>
+      </div>
+    );
 
   return (
     <div className="mx-auto max-w-360">
@@ -262,8 +278,14 @@ const DashboardHome = () => {
           />
           {loading ? (
             <div className="mt-6 h-56 animate-pulse rounded-xl bg-(--surface-soft)" />
+          ) : !totalClicks ? (
+            <EmptyState
+              icon={BarChart3}
+              title="No analytics available yet"
+              description="Share your short link to start collecting click activity."
+            />
           ) : (
-            <BarChart data={chartData} empty={!totalClicks} />
+            <BarChart data={chartData} />
           )}
         </DashboardCard>
         <CountryCard items={countryItems} loading={loading} />
@@ -356,7 +378,7 @@ const DashboardHome = () => {
               ))}
               {!latestVisits.length && (
                 <p className="py-8 text-center text-sm text-(--secondary-text)">
-                  No click activity yet.
+                  No click activity yet. Share a short link to start collecting visits.
                 </p>
               )}
             </div>
