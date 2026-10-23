@@ -230,4 +230,4 @@ body {
 :is(.landing-shell, .dashboard-app) svg:is(.lucide-megaphone, .lucide-sparkles):is(:not(button svg), .semantic-icon) { color: var(--icon-campaign); }
 :is(.landing-shell, .dashboard-app) svg:is(.lucide-settings, .lucide-globe-2, .lucide-globe, .lucide-plug, .lucide-user-round):is(:not(button svg), .semantic-icon) { color: var(--icon-utility); }
 
-:root.dim-mode img[src="/primarylogo.png"] { filter: brightness(0) invert(1); }
+:root.dim-mode img[src="/primarylogo.avif"] { filter: brightness(0) invert(1); }

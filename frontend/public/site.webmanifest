@@ -6,6 +6,6 @@
   "background_color": "#fafbf8",
   "theme_color": "#fafbf8",
   "icons": [
-    { "src": "/favIcon.png", "sizes": "1254x1254", "type": "image/png" }
+    { "src": "/favIcon.avif", "sizes": "1254x1254", "type": "image/png" }
   ]
 }

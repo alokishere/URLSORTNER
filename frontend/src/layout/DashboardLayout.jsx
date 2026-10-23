@@ -95,7 +95,7 @@ const DashboardLayout = () => {
         )}
       >
         <div className="flex h-19 shrink-0 items-center gap-3 border-b border-(--border) px-5">
-          <img src="/primarylogo.png" alt="Ek URL" className="h-11 w-auto max-w-36 object-contain object-left" />
+          <img src="/primarylogo.avif" alt="Ek URL" className="h-11 w-auto max-w-36 object-contain object-left" />
           <button
             type="button"
             aria-label="Close sidebar"

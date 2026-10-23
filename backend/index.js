@@ -55,7 +55,7 @@ app.use(["/urls", "/user"], (req, res, next) => {
 app.use("/urls", urlRouter);
 app.use("/user", userRouter);
 app.get("/", (req, res) => {
-  return res.redirect(302, "https://app.ekurl.in");
+  return res.redirect(301, "https://app.ekurl.in");
 });
 app.get("/:shortID", getRedirectUrl);
 

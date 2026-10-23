@@ -156,7 +156,7 @@ const topLinks = [
 
 const Brand = () => (
   <img
-    src="/primarylogo.png"
+    src="/primarylogo.avif"
     alt="Ek URL"
     className="h-10 w-auto max-w-32 object-contain object-left"
   />
