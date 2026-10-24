@@ -53,6 +53,35 @@ const googleUserQuery = (providerId) => ({
   isActive: { $ne: false },
 });
 
+const validGoogleCredential = (credential) =>
+  typeof credential === "string" && credential.length >= 100 && credential.length <= 10000;
+
+async function verifyGoogleEmailCredential(credential) {
+  if (!validGoogleCredential(credential)) {
+    const error = new Error(friendlyGoogleError);
+    error.code = "GOOGLE_TOKEN_INVALID";
+    throw error;
+  }
+  const payload = await googleAuth.verifyGoogleIdToken(credential);
+  const email = normalizeEmail(payload.email);
+  if (!email || email.length > 50 || !isValidEmail(email)) {
+    const error = new Error(friendlyGoogleError);
+    error.code = "GOOGLE_TOKEN_INVALID";
+    throw error;
+  }
+  return { payload, email };
+}
+
+function sendGoogleVerificationError(res, error) {
+  if (error?.code === "GOOGLE_CONFIG_MISSING") {
+    console.error("Google authentication is not configured");
+    return res.status(503).json({ error: friendlyGoogleError });
+  }
+  if (error?.code !== "GOOGLE_TOKEN_INVALID")
+    console.error("Google email verification failed", { error: error?.message || "Unknown Google error" });
+  return res.status(401).json({ error: friendlyGoogleError });
+}
+
 async function googleLogin(req, res) {
   const credential = req.body?.credential;
   if (typeof credential !== "string" || credential.length < 100 || credential.length > 10000)
@@ -163,6 +192,15 @@ async function linkGoogleAccount(req, res) {
     if (error?.code !== "GOOGLE_TOKEN_INVALID")
       console.error("Google account linking failed", { error: error?.message || "Unknown Google error" });
     return res.status(401).json({ error: friendlyGoogleError });
+  }
+}
+
+async function verifyGoogleEmail(req, res) {
+  try {
+    const { email } = await verifyGoogleEmailCredential(req.body?.credential);
+    return res.status(200).json({ verified: true, email });
+  } catch (error) {
+    return sendGoogleVerificationError(res, error);
   }
 }
 
@@ -370,6 +408,36 @@ async function updateUser(req, res) {
       return res
         .status(403)
         .json({ error: "Cannot change account permissions" });
+    let verifiedGoogle = null;
+    if ("email" in body) {
+      try {
+        verifiedGoogle = await verifyGoogleEmailCredential(body.googleCredential);
+      } catch (error) {
+        if (error?.code === "GOOGLE_CONFIG_MISSING")
+          return res.status(503).json({ error: "Google verification is not available right now." });
+        return res.status(401).json({ error: "Verify your email with Google before changing it." });
+      }
+      const requestedEmail = normalizeEmail(body.email);
+      if (!isValidEmail(requestedEmail) || requestedEmail !== verifiedGoogle.email)
+        return res.status(409).json({ error: "The profile email must match the verified Google email." });
+
+      const emailOwner = await User.findOne({
+        email: requestedEmail,
+        _id: { $ne: req.user._id },
+      });
+      if (emailOwner)
+        return res.status(409).json({ error: "That email address is already used by another account." });
+
+      const linkedUser = await User.findOne(googleUserQuery(verifiedGoogle.payload.sub));
+      if (linkedUser && String(linkedUser._id) !== String(req.user._id))
+        return res.status(409).json({ error: "This Google account is already linked to another user." });
+
+      const currentGoogleProvider = (req.user.authProviders || []).find(
+        (provider) => provider.provider === "google",
+      );
+      if (currentGoogleProvider && currentGoogleProvider.providerId !== verifiedGoogle.payload.sub)
+        return res.status(409).json({ error: "A different Google account is already linked." });
+    }
     const user = await User.findById(req.user._id).select(
       "+password +passwordHash",
     );
@@ -387,7 +455,16 @@ async function updateUser(req, res) {
       user.sessionVersion = (user.sessionVersion ?? 0) + 1;
     }
     if ("fullName" in body) user.fullName = body.fullName;
-    if ("email" in body) user.email = body.email;
+    if (verifiedGoogle) {
+      user.email = verifiedGoogle.email;
+      const hasGoogleProvider = (user.authProviders || []).some(
+        (provider) => provider.provider === "google",
+      );
+      if (!hasGoogleProvider) {
+        user.authProviders = user.authProviders || [];
+        user.authProviders.push({ provider: "google", providerId: verifiedGoogle.payload.sub });
+      }
+    }
     await user.save();
     if ("password" in body) issueSession(res, user);
     return res
@@ -423,4 +500,5 @@ module.exports = {
   resetPassword,
   googleLogin,
   linkGoogleAccount,
+  verifyGoogleEmail,
 };

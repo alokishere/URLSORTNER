@@ -21,6 +21,7 @@ const ToolsPage = lazy(() => import("../pages/dashboard/DashboardPlaceholder").t
 const NotificationsPage = lazy(() => import("../pages/dashboard/NotificationsPage"));
 const QRCodePage = lazy(() => import("../pages/dashboard/QRCodePage"));
 const ProfilePage = lazy(() => import("../pages/dashboard/ProfilePage"));
+const SecurityPage = lazy(() => import("../pages/dashboard/SecurityPage"));
 const SettingsPage = lazy(() => import("../pages/dashboard/SettingsPage"));
 
 const ProtectedRoute = ({ children }) => {
@@ -80,6 +81,8 @@ const Mainroute = () => (
         <Route path="integrations" element={<IntegrationsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="settings/profile" element={<ProfilePage />} />
+        <Route path="settings/security" element={<SecurityPage />} />
+        <Route path="settings/sequrity" element={<SecurityPage />} />
         <Route path="billing" element={<BillingPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
       </Route>

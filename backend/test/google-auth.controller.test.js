@@ -3,7 +3,7 @@ const test = require("node:test");
 const mongoose = require("mongoose");
 const User = require("../models/user.model");
 const googleAuth = require("../utils/googleAuth");
-const { googleLogin, linkGoogleAccount } = require("../controllers/user.controller");
+const { googleLogin, linkGoogleAccount, verifyGoogleEmail } = require("../controllers/user.controller");
 
 const createResponse = () => ({
   statusCode: null,
@@ -111,6 +111,19 @@ test("Google login rejects invalid identity tokens without exposing provider det
   assert.equal(response.statusCode, 401);
   assert.equal(response.body.error, "Google sign-in couldn't be completed. Please try again.");
   assert.doesNotMatch(response.body.error, /audience|secret/);
+});
+
+test("authenticated users can verify the Google email before changing it", async (t) => {
+  stub(t, googleAuth, "verifyGoogleIdToken", async () => payload({ email: "verified@example.com" }));
+
+  const response = createResponse();
+  await verifyGoogleEmail(
+    { body: { credential: "g".repeat(200) } },
+    response,
+  );
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.body, { verified: true, email: "verified@example.com" });
 });
 
 test("authenticated users can explicitly link a matching Google identity", async (t) => {

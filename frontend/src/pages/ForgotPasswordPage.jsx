@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Link2, Mail } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import instance from "../axios";
 import { getApiErrorMessage } from "../lib/apiErrors";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const [email, setEmail] = useState(location.state?.email || "");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);

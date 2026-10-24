@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 let googleScriptPromise;
 const googleRuntime = {
-  initializedClientId: null,
+  clientId: null,
   callbacks: new Set(),
 };
 
@@ -13,37 +13,42 @@ const loadGoogleScript = () => {
   googleScriptPromise = new Promise((resolve, reject) => {
     const existing = document.querySelector('script[data-google-identity="true"]');
     if (existing) {
+      if (existing.dataset.loaded === "true") {
+        resolve();
+        return;
+      }
       existing.addEventListener("load", resolve, { once: true });
       existing.addEventListener("error", reject, { once: true });
       return;
     }
+
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
     script.dataset.googleIdentity = "true";
-    script.onload = resolve;
-    script.onerror = () => {
+    script.addEventListener("load", () => {
+      script.dataset.loaded = "true";
+      resolve();
+    }, { once: true });
+    script.addEventListener("error", () => {
       googleScriptPromise = undefined;
       reject(new Error("Google sign-in could not load"));
-    };
+    }, { once: true });
     document.head.appendChild(script);
   });
+
   return googleScriptPromise;
 };
 
 const initializeGoogleIdentity = async (clientId) => {
   await loadGoogleScript();
-
-  if (!window.google?.accounts?.id) {
+  if (!window.google?.accounts?.id)
     throw new Error("Google sign-in could not initialize");
-  }
-
-  if (googleRuntime.initializedClientId && googleRuntime.initializedClientId !== clientId) {
+  if (googleRuntime.clientId && googleRuntime.clientId !== clientId)
     throw new Error("Google sign-in is configured with more than one client ID");
-  }
 
-  if (!googleRuntime.initializedClientId) {
+  if (!googleRuntime.clientId) {
     window.google.accounts.id.initialize({
       client_id: clientId,
       callback: (response) => {
@@ -52,7 +57,7 @@ const initializeGoogleIdentity = async (clientId) => {
       },
       cancel_on_tap_outside: true,
     });
-    googleRuntime.initializedClientId = clientId;
+    googleRuntime.clientId = clientId;
   }
 };
 
@@ -67,18 +72,16 @@ const GoogleSignInButton = ({ onCredential, disabled = false }) => {
   }, [onCredential]);
 
   useEffect(() => {
+    if (!clientId) return undefined;
     let active = true;
-    let unregisterCallback;
-    if (!clientId) return () => { active = false; };
+    let unregister;
 
     initializeGoogleIdentity(clientId)
       .then(() => {
-        if (!active || !buttonRef.current || !window.google?.accounts?.id) return;
-
+        if (!active || !buttonRef.current) return;
         const credentialCallback = (credential) => callbackRef.current?.(credential);
         googleRuntime.callbacks.add(credentialCallback);
-        unregisterCallback = () => googleRuntime.callbacks.delete(credentialCallback);
-
+        unregister = () => googleRuntime.callbacks.delete(credentialCallback);
         buttonRef.current.replaceChildren();
         window.google.accounts.id.renderButton(buttonRef.current, {
           type: "standard",
@@ -94,7 +97,7 @@ const GoogleSignInButton = ({ onCredential, disabled = false }) => {
 
     return () => {
       active = false;
-      unregisterCallback?.();
+      unregister?.();
     };
   }, [clientId]);
 

@@ -11,6 +11,7 @@ const {
   resetPassword,
   googleLogin,
   linkGoogleAccount,
+  verifyGoogleEmail,
 } = require("../controllers/user.controller");
 const authenticateUser = require("../middleware/auth");
 
@@ -31,6 +32,8 @@ const googleLoginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, stan
 router.post("/google", googleLoginLimiter, googleLogin);
 const googleLinkLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Too many Google linking attempts. Please try again later." } });
 router.post("/google/link", googleLinkLimiter, authenticateUser, linkGoogleAccount);
+const googleEmailVerificationLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: "draft-8", legacyHeaders: false, message: { error: "Too many Google verification attempts. Please try again later." } });
+router.post("/google/verify-email", googleEmailVerificationLimiter, authenticateUser, verifyGoogleEmail);
 router.post("/logout", logoutUser);
 router.get("/session", authenticateUser, getSession);
 router.put("/update/:id", authenticateUser, updateUser);

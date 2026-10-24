@@ -11,9 +11,8 @@ const app = express();
 const port = process.env.PORT || 3000;
 app.set("trust proxy", 1);
 
-//cores
-const corsOptions = {
-  origin: [
+// CORS origins are explicit because authenticated API responses use cookies.
+const defaultOrigins = [
     "http://localhost:3000",
     "http://localhost:5173",
     "http://localhost:5174",
@@ -23,7 +22,18 @@ const corsOptions = {
     "https://ekurl.vercel.app",
     "https://ekurl.in",
     "https://app.ekurl.in",
-  ],
+];
+const configuredOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const corsOrigins = [...new Set([
+  ...defaultOrigins,
+  process.env.FRONTEND_URL,
+  ...configuredOrigins,
+].filter(Boolean))];
+const corsOptions = {
+  origin: corsOrigins,
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],

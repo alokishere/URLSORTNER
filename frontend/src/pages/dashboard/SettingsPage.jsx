@@ -1,7 +1,6 @@
 import {
   Bell,
   ChevronRight,
-  CreditCard,
   Globe2,
   Plug,
   ShieldCheck,
@@ -14,19 +13,11 @@ import { getInitials, getStoredUser } from "../../lib/dashboardData";
 const settingsCards = [
   {
     title: "Profile",
-    description: "Update your name, email, password, and account access.",
+    description: "View your profile details and account identity.",
     icon: UserRound,
     route: "/dashboard/settings/profile",
     label: "Account",
     tone: "primary",
-  },
-  {
-    title: "Billing",
-    description: "Review your current plan, usage, and upgrade options.",
-    icon: CreditCard,
-    route: "/dashboard/billing",
-    label: "Plan & usage",
-    tone: "accent",
   },
   {
     title: "Notifications",
@@ -38,9 +29,9 @@ const settingsCards = [
   },
   {
     title: "Security",
-    description: "Manage your password and review account protection controls.",
+    description: "Change your name or password and manage account protection.",
     icon: ShieldCheck,
-    route: "/dashboard/settings/profile#password",
+    route: "/dashboard/settings/security",
     label: "Protected",
     tone: "primary",
   },

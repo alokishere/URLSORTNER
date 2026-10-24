@@ -1,4 +1,17 @@
-# React + Vite
+# Ek URL frontend
+
+The app uses Vite and React. Copy `.env.example` to `.env` for local development.
+
+## Google sign-in
+
+Google Identity Services uses a browser-issued ID token; the backend verifies it with `GOOGLE_CLIENT_ID`, creates or retrieves the account, and sets the existing HTTP-only session cookie. The client ID is public configuration, but the backend JWT secret and database credentials must remain server-only.
+
+Set these values in deployment environments:
+
+- Frontend: `VITE_API_BASE_URL` and `VITE_GOOGLE_CLIENT_ID`.
+- Backend: `GOOGLE_CLIENT_ID`, `FRONTEND_URL`, `CORS_ORIGINS`, `JWT_SECRET`, and the existing database/email settings.
+
+In Google Cloud Console, add each frontend origin (for example `https://app.ekurl.in` and local Vite origins) under OAuth client **Authorized JavaScript origins**. This flow does not use a server OAuth callback or client secret, so no redirect URI is required for the sign-in button.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

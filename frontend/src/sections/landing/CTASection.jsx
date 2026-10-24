@@ -1,0 +1,7 @@
+import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
+import { Reveal } from "../../components/MotionPrimitives";
+
+const CTASection = ({ openAuth, reduceMotion }) => <section className="border-t border-(--border)/80 bg-(--surface)"><div className="mx-auto max-w-[1120px] px-4 pb-20 sm:px-6 sm:pb-24 lg:px-8 lg:pb-28"><Reveal className="rounded-[18px] bg-(--secondary)/55 px-6 py-14 text-center sm:px-12 sm:py-16"><h2 className="text-balance text-3xl font-bold tracking-[-0.045em] sm:text-[2.65rem]">Turn your links into opportunities.</h2><p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-(--secondary-text)">Start free in seconds. Sign in to manage links and review recorded clicks.</p><div className="mt-7 flex flex-col items-center justify-center gap-2 sm:flex-row"><motion.button type="button" onClick={() => openAuth("register")} whileHover={reduceMotion ? undefined : { y: -1 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="focus-ring inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-[10px] bg-(--accent) px-5 text-sm font-semibold text-(--surface)">Get Started <ArrowRight className="h-4 w-4" aria-hidden="true" /></motion.button><a href="#pricing" className="focus-ring inline-flex min-h-11 items-center rounded-[10px] px-4 text-sm font-semibold">Compare plans</a></div></Reveal></div></section>;
+
+export default CTASection;

@@ -1,0 +1,8 @@
+import { BarChart3, Link as LinkIcon, Sparkles } from "lucide-react";
+import { Reveal, Stagger, StaggerItem } from "../../components/MotionPrimitives";
+
+const steps = [["01", LinkIcon, "Paste URL", "Paste a complete URL to create a shorter link."], ["02", Sparkles, "Create Short Link", "Get a short URL; sign in to manage it and create a QR code."], ["03", BarChart3, "Track Performance", "Review recorded visits and available visitor details in your dashboard."]];
+
+const HowItWorksSection = () => <section className="border-y border-(--border)/80 bg-(--background)"><div className="mx-auto max-w-[1120px] px-4 py-20 sm:px-6 sm:py-24 lg:px-8 lg:py-28"><Reveal className="mx-auto max-w-[620px] text-center"><p className="text-xs font-medium text-(--primary-deep)">How it works</p><h2 className="mt-3 text-balance text-3xl font-bold tracking-[-0.045em] sm:text-[2.65rem]">From long link to insight in seconds</h2></Reveal><Stagger className="mt-12 grid gap-4 md:grid-cols-3">{steps.map(([number, Icon, title, description]) => <StaggerItem key={number} className="rounded-[16px] border border-(--border) bg-(--surface) p-5 sm:p-6"><div className="flex items-center justify-between"><span className="flex h-10 w-10 items-center text-(--primary-deep)"><Icon className="h-4 w-4" aria-hidden="true" /></span><span className="font-mono text-[11px] text-(--secondary-text)">{number}</span></div><h3 className="mt-8 text-base font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-(--secondary-text)">{description}</p></StaggerItem>)}</Stagger></div></section>;
+
+export default HowItWorksSection;

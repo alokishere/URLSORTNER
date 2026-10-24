@@ -60,28 +60,9 @@ export const AuthProvider = ({ children }) => {
   }, [status, clearSession]);
 
   useEffect(() => {
-    let active = true;
-    instance
-      .get("/user/session")
-      .then((response) => {
-        if (!active) return;
-        const verifiedUser = response.data?.user;
-        if (!verifiedUser)
-          throw new Error("Session response did not include a user");
-        localStorage.setItem("user", JSON.stringify(verifiedUser));
-        setUser(verifiedUser);
-        setStatus("authenticated");
-      })
-      .catch(() => {
-        if (!active) return;
-        localStorage.removeItem("user");
-        setUser(null);
-        setStatus("unauthenticated");
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+    const timer = window.setTimeout(() => void verifySession(), 0);
+    return () => window.clearTimeout(timer);
+  }, [verifySession]);
 
   const value = useMemo(
     () => ({

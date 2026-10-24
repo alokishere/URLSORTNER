@@ -1,13 +1,15 @@
 import {
+  ArrowUpRight,
   BarChart3,
   Globe2,
   Link2,
+  MousePointerClick,
   Plug,
+  QrCode,
   Rocket,
   Settings2,
   SlidersHorizontal,
   Sparkles,
-  WalletCards,
   Wrench,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -19,9 +21,10 @@ import {
   LoadingBlock,
   PageIntro,
   SectionHeading,
+  StatCard,
   StatusPill,
 } from "../../components/dashboard/DashboardPrimitives";
-import { formatCompact, getClicks } from "../../lib/dashboardData";
+import { formatCompact, getClicks, getShortUrl } from "../../lib/dashboardData";
 import { useCreateLinkModal } from "../../components/dashboard/useCreateLinkModal";
 
 import { useDashboardLinks } from "../../lib/dashboardQueries";
@@ -94,10 +97,27 @@ export const AnalyticsOverview = () => {
   const { openCreateLink } = useCreateLinkModal();
   const { data: urls = [], isLoading: loading, isFetching, error, refetch } = useDashboardLinks();
   const loadError = error ? getQueryErrorMessage(error, "We could not load analytics right now.") : "";
+  const totals = urls.reduce(
+    (result, url) => {
+      const clicks = Number(url.linkClicks ?? getClicks(url) ?? 0);
+      const scans = Number(url.qrScans || 0);
+      result.clicks += clicks;
+      result.scans += scans;
+      result.visits += Number(url.totalVisits || clicks + scans);
+      return result;
+    },
+    { clicks: 0, scans: 0, visits: 0 },
+  );
+
   if (loadError && !loading)
     return (
       <div className="mx-auto max-w-[1100px]">
-        <PageIntro eyebrow="Analytics" title="Link analytics" description="Choose a link to inspect its recorded visit history and performance." />
+        <PageIntro
+          eyebrow="Analytics"
+          title="Link analytics"
+          description="Choose a link to inspect its recorded visit history and performance."
+          actions={<Button onClick={openCreateLink}>Create short URL</Button>}
+        />
         <DashboardCard><ErrorState description={loadError} onRetry={refetch} /></DashboardCard>
       </div>
     );
@@ -107,30 +127,62 @@ export const AnalyticsOverview = () => {
         eyebrow="Analytics"
         title="Link analytics"
         description="Choose a link to inspect its recorded visit history and performance."
+        actions={<Button onClick={openCreateLink}>Create short URL</Button>}
       />
-      <p className="mb-4 text-xs text-(--secondary-text)" role="status">{isFetching && !loading ? "Updating analytics…" : "Analytics refresh approximately every minute."}</p>
+      <p className="mb-4 text-xs text-(--secondary-text)" role="status">
+        {isFetching && !loading ? "Updating analytics…" : "Analytics refresh approximately every minute."}
+      </p>
       {loadError && (
         <p role="alert" className="mb-4 rounded-xl border border-(--danger)/35 bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)">
           {loadError}
         </p>
       )}
+
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          icon={MousePointerClick}
+          label="Link clicks"
+          value={formatCompact(totals.clicks)}
+          helper="Direct short-link visits"
+        />
+        <StatCard
+          icon={QrCode}
+          label="QR scans"
+          value={formatCompact(totals.scans)}
+          helper="Visits from QR codes"
+        />
+        <StatCard
+          icon={Link2}
+          label="Tracked links"
+          value={formatCompact(urls.length)}
+          helper="Links with analytics"
+        />
+        <StatCard
+          icon={BarChart3}
+          label="Total visits"
+          value={formatCompact(totals.visits)}
+          helper="Clicks and scans combined"
+        />
+      </div>
+
       <DashboardCard className="p-4 sm:p-5">
         <SectionHeading
           icon={BarChart3}
           title="Your tracked links"
-          description="Only click events returned by the current API are shown."
+          description="Compare clicks and QR scans, then open a link for its full visit history."
         />
-        <div className="mt-5 divide-y divide-[var(--border)]">
+        <div className="mt-5 space-y-2">
           {loading ? (
             <div className="space-y-4 py-3">
               {Array.from({ length: 5 }, (_, index) => (
-                <div key={index} className="flex items-center gap-4 py-2">
-                  <LoadingBlock className="h-9 w-9" />
+                <div key={index} className="flex items-center gap-4 rounded-2xl border border-(--border) p-4">
+                  <LoadingBlock className="h-11 w-11 rounded-xl" />
                   <div className="min-w-0 flex-1 space-y-2">
                     <LoadingBlock className="h-4 w-2/5" />
                     <LoadingBlock className="h-3 w-3/5" />
                   </div>
-                  <LoadingBlock className="h-4 w-12" />
+                  <LoadingBlock className="hidden h-10 w-28 sm:block" />
+                  <LoadingBlock className="h-10 w-10 rounded-xl" />
                 </div>
               ))}
             </div>
@@ -141,24 +193,47 @@ export const AnalyticsOverview = () => {
               onClick={() =>
                 navigate(`/dashboard/links/${url.shortID}/analytics`)
               }
-              className="focus-ring flex w-full cursor-pointer items-center gap-4 py-4 text-left hover:bg-(--surface-soft)/45"
+              className="focus-ring group flex w-full cursor-pointer flex-col gap-4 rounded-2xl border border-transparent p-3 text-left transition hover:border-(--border) hover:bg-(--surface-soft)/65 sm:grid sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:gap-5 sm:p-4"
             >
-              <span className="flex h-9 w-9 items-center text-(--primary-deep)">
-                <Link2 className="h-4 w-4" aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <strong className="block truncate text-sm text-(--primary-text)">
-                  ekurl.in/{url.shortID}
-                </strong>
-                <span className="block truncate text-xs text-(--secondary-text)">
-                  {url.redirectUrl}
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-(--secondary)/65 text-(--primary-deep)">
+                  <Link2 className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <strong className="block truncate text-sm font-bold text-(--primary-text)" title={url.title || getShortUrl(url)}>
+                    {url.title?.trim() || getShortUrl(url)}
+                  </strong>
+                  <span className="mt-1 block truncate text-xs text-(--primary-deep)">
+                    {getShortUrl(url)}
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs text-(--secondary-text)">
+                    {url.redirectUrl}
+                  </span>
                 </span>
               </span>
-              <span className="text-right">
-                <strong className="block text-sm text-(--primary-text)">
-                  {formatCompact(getClicks(url))}
-                </strong>
-                <span className="text-xs text-(--secondary-text)">clicks</span>
+              <span className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+                <span className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-(--surface-soft) px-3">
+                  <MousePointerClick className="h-4 w-4 text-(--primary-deep)" aria-hidden="true" />
+                  <span>
+                    <strong className="block text-sm text-(--primary-text)">
+                      {formatCompact(Number(url.linkClicks ?? getClicks(url) ?? 0))}
+                    </strong>
+                    <span className="block text-[11px] text-(--secondary-text)">clicks</span>
+                  </span>
+                </span>
+                <span className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-(--surface-soft) px-3">
+                  <QrCode className="h-4 w-4 text-(--primary-deep)" aria-hidden="true" />
+                  <span>
+                    <strong className="block text-sm text-(--primary-text)">
+                      {formatCompact(Number(url.qrScans || 0))}
+                    </strong>
+                    <span className="block text-[11px] text-(--secondary-text)">scans</span>
+                  </span>
+                </span>
+              </span>
+              <span className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-(--border) px-3 text-xs font-semibold text-(--primary-text) transition group-hover:border-(--primary-deep) group-hover:text-(--primary-deep)">
+                View analytics
+                <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
               </span>
             </button>
           )) : (
@@ -324,30 +399,6 @@ export const SettingsPage = () => (
         title: "Notifications",
         description:
           "Notification preferences are reserved for a connected event service.",
-      },
-    ]}
-  />
-);
-export const BillingPage = () => (
-  <PlaceholderPage
-    icon={WalletCards}
-    eyebrow="Plan & usage"
-    title="Billing"
-    description="Review your current plan and usage before you decide to upgrade."
-    actionLabel="Create a short link"
-    featureList={[
-      {
-        title: "Free plan",
-        description: "The current workspace supports up to 1,000 links.",
-      },
-      {
-        title: "Usage tracking",
-        description: "Your usage summary lives in the dashboard sidebar.",
-      },
-      {
-        title: "Upgrade path",
-        description:
-          "Payment and billing history will appear after a billing provider is connected.",
       },
     ]}
   />
