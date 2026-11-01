@@ -334,7 +334,7 @@ export const LinkRow = ({
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-(--primary-text)">
-              ekurl.in/{url.shortID}
+              {shortUrl}
             </p>
             <p className="truncate text-xs text-(--secondary-text)">
               {url.title || url.alias || "Short link"}

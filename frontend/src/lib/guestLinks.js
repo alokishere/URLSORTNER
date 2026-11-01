@@ -1,3 +1,4 @@
+import instance from "../axios";
 import { claimGuestLinks } from "./urlApi";
 
 export const GUEST_LINKS_KEY = "urlsortner_guest_links_v1";
@@ -12,7 +13,7 @@ export const getGuestLinks = () => {
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
       (link) => link && typeof link.shortID === "string" && typeof link.shortUrl === "string",
-    );
+    ).map(link => ({ ...link, shortUrl: `${instance.defaults.baseURL}/${link.shortID}` }));
   } catch {
     return [];
   }

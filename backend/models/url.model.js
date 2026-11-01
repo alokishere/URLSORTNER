@@ -62,6 +62,15 @@ const urlSchema = new mongoose.Schema(
       default: "active",
     },
 
+    // QR lifecycle is independent from the short link lifecycle. Existing
+    // documents default to visible for backwards compatibility; new regular
+    // links explicitly set this to false unless a QR is requested.
+    qrEnabled: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
+
     expiresAt: {
       type: Date,
       default: null,

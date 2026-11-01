@@ -2,6 +2,7 @@ const express = require("express");
 const { rateLimit } = require("express-rate-limit");
 const {
   claimGuestUrls,
+  deleteQrCode,
   deleteUrl,
   generateNewShortID,
   getAnalytics,
@@ -32,6 +33,7 @@ router.get("/activity", getRecentActivity);
 router.post("/claim", claimGuestUrls);
 router.get("/:shortID/analytics", getAnalytics);
 router.get("/:id/qr", getQrCode);
+router.delete("/:id/qr", deleteQrCode);
 router.patch("/:id/status", setUrlStatus);
 router.patch("/:id", updateUrl);
 router.delete("/:id", deleteUrl);

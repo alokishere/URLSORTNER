@@ -144,7 +144,7 @@ test("reset password rejects invalid input before touching the database", async 
 
 test("reset email uses an HTTPS URL and escapes dynamic HTML", () => {
   const previousFrontendUrl = process.env.FRONTEND_URL;
-  process.env.FRONTEND_URL = "https://app.ekurl.in";
+  process.env.FRONTEND_URL = "https://url.alokdev.in";
   try {
     const message = createPasswordResetEmail({
       fullName: "<img src=x onerror=alert(1)>",

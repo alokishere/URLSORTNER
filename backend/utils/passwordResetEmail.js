@@ -9,13 +9,7 @@ const escapeHtml = (value) =>
     .replaceAll("'", "&#39;");
 
 const getResetUrl = (token) => {
-  const configuredFrontendUrl = process.env.FRONTEND_URL;
-  if (!configuredFrontendUrl) throw new Error("FRONTEND_URL is not configured");
-
-  const frontendUrl = new URL(configuredFrontendUrl);
-  if (frontendUrl.protocol !== "https:")
-    throw new Error("FRONTEND_URL must use HTTPS");
-
+  const frontendUrl = require("../config/env").getConfig().frontendUrl;
   const resetUrl = new URL("/reset-password", frontendUrl);
   resetUrl.searchParams.set("token", token);
   return resetUrl.toString();

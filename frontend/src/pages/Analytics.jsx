@@ -145,7 +145,7 @@ const Analytics = () => {
   if (error)
     return (
       <div className="mx-auto max-w-275">
-        <PageIntro eyebrow="Link analytics" title={`ekurl.in/${sortid}`} description="Recorded visits for this short link." actions={<Button variant="secondary" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4" aria-hidden="true" />Back</Button>} />
+        <PageIntro eyebrow="Link analytics" title={shortUrl} description="Recorded visits for this short link." actions={<Button variant="secondary" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4" aria-hidden="true" />Back</Button>} />
         <DashboardCard><ErrorState description={error} onRetry={refetch} /></DashboardCard>
       </div>
     );
@@ -176,7 +176,7 @@ const Analytics = () => {
       </p>
       <PageIntro
         eyebrow="Link analytics"
-        title={`ekurl.in/${sortid}`}
+        title={shortUrl}
         description="Recorded visits for this short link. A visit ID identifies an event, not a verified unique person."
         actions={
           <>

@@ -3,6 +3,7 @@ const test = require("node:test");
 const mongoose = require("mongoose");
 const Url = require("../models/url.model");
 const {
+  deleteQrCode,
   generateNewShortID,
   updateUrl,
 } = require("../controllers/url.controller");
@@ -45,6 +46,7 @@ const createUrlRecord = (overrides = {}) => ({
   title: "Original link",
   createdby: ownerId,
   status: "active",
+  qrEnabled: true,
   createdAt: new Date(),
   updatedAt: new Date(),
   async save() {},
@@ -120,6 +122,29 @@ test("create API generates an alias and reports duplicate aliases", async (t) =>
   assert.equal(duplicateResponse.body.error, "That alias is already in use");
 });
 
+test("deleting a QR disables only the QR and keeps the short link", async (t) => {
+  const link = createUrlRecord({ qrEnabled: true });
+  stubUrlModel(t, {
+    findById: async () => link,
+  });
+
+  const response = createResponse();
+  await deleteQrCode(
+    {
+      params: { id: link._id.toString() },
+      user: { _id: ownerId, roles: [] },
+    },
+    response,
+  );
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.id, link._id);
+  assert.equal(response.body.qrEnabled, false);
+  assert.equal(link.qrEnabled, false);
+  assert.equal(link.shortID, "original-link");
+  assert.equal(link.redirectUrl, "https://example.com/original");
+});
+
 test("update API rejects reserved aliases and invalid destinations", async (t) => {
   const link = createUrlRecord();
   stubUrlModel(t, {
@@ -156,4 +181,23 @@ test("update API normalizes valid aliases and rejects duplicate aliases", async 
   await updateUrl(updateRequest(link._id.toString(), { alias: "taken-link" }), duplicateResponse);
   assert.equal(duplicateResponse.statusCode, 409);
   assert.equal(duplicateResponse.body.error, "That alias is already in use");
+});
+
+test("short URLs ignore request Host and use the configured canonical backend", async (t) => {
+  const oldBackend = process.env.BACKEND_URL;
+  const oldApi = process.env.API_BASE_URL;
+  process.env.BACKEND_URL = "https://u.alokdev.in/";
+  process.env.API_BASE_URL = "https://u.alokdev.in";
+  t.after(() => {
+    if (oldBackend === undefined) delete process.env.BACKEND_URL; else process.env.BACKEND_URL = oldBackend;
+    if (oldApi === undefined) delete process.env.API_BASE_URL; else process.env.API_BASE_URL = oldApi;
+  });
+  t.mock.method(Url, "exists", async () => false);
+  t.mock.method(Url, "create", async (payload) => ({ ...payload, _id: new mongoose.Types.ObjectId() }));
+  const req = createRequest({ url: "https://example.com", alias: "canonical-link" });
+  req.get = () => "untrusted.example";
+  const res = createResponse();
+  await generateNewShortID(req, res);
+  assert.equal(res.statusCode, 201);
+  assert.equal(res.body.shortUrl, "https://u.alokdev.in/canonical-link");
 });

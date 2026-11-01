@@ -16,6 +16,9 @@ export const createShortUrl = async (payload) => {
   return created;
 };
 
+export const createQrCode = async (payload) =>
+  createShortUrl({ ...payload, qr: true });
+
 export const claimGuestLinks = async (claims) => {
   const response = await instance.post("/urls/claim", { claims });
   void invalidateLinkQueries();
@@ -36,6 +39,12 @@ export const updateShortUrlStatus = async (id, status) => {
 
 export const deleteShortUrl = async (id) => {
   const response = await instance.delete(`/urls/${id}`);
+  void invalidateLinkQueries(id);
+  return response.data;
+};
+
+export const deleteQrCode = async (id) => {
+  const response = await instance.delete(`/urls/${id}/qr`);
   void invalidateLinkQueries(id);
   return response.data;
 };

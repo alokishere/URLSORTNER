@@ -33,6 +33,7 @@ const loadGoogleScript = () => {
     }, { once: true });
     script.addEventListener("error", () => {
       googleScriptPromise = undefined;
+      script.remove();
       reject(new Error("Google sign-in could not load"));
     }, { once: true });
     document.head.appendChild(script);
@@ -65,6 +66,7 @@ const GoogleSignInButton = ({ onCredential, disabled = false }) => {
   const buttonRef = useRef(null);
   const callbackRef = useRef(onCredential);
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const [attempted, setAttempted] = useState(false);
   const [status, setStatus] = useState(clientId ? "loading" : "missing");
 
   useEffect(() => {
@@ -101,18 +103,17 @@ const GoogleSignInButton = ({ onCredential, disabled = false }) => {
     };
   }, [clientId]);
 
-  if (status === "missing")
+  if (status === "missing" || status === "error")
     return (
-      <p className="rounded-xl border border-(--border) bg-(--surface-soft) px-4 py-3 text-center text-xs text-(--secondary-text)">
-        Google sign-in is not configured for this environment.
-      </p>
-    );
-
-  if (status === "error")
-    return (
-      <p role="status" className="rounded-xl border border-(--danger)/25 bg-(--danger-soft) px-4 py-3 text-center text-xs text-(--danger)">
-        Google sign-in is unavailable right now. You can use email and password instead.
-      </p>
+      <div className="text-center">
+        <button type="button" disabled={disabled} onClick={() => setAttempted(true)}
+          className="rounded-xl border border-(--border) px-4 py-3 text-sm">
+          Google sign-in unavailable
+        </button>
+        {attempted && <p role="status" className="mt-2 text-xs text-(--secondary-text)">
+          Google sign-in is temporarily unavailable. Please use email and password.
+        </p>}
+      </div>
     );
 
   return (

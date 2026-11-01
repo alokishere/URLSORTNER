@@ -50,7 +50,7 @@ export const EditLinkDialog = ({ link, onClose, onSave, saving, error }) => {
   );
 };
 
-export const DeleteLinkDialog = ({ link, onClose, onConfirm, deleting, error }) => {
+export const DeleteLinkDialog = ({ link, onClose, onConfirm, deleting, error, preserveLink = false }) => {
   const cancelRef = useRef(null);
   useDialogLifecycle(Boolean(link), onClose, cancelRef);
   if (!link) return null;
@@ -58,10 +58,10 @@ export const DeleteLinkDialog = ({ link, onClose, onConfirm, deleting, error }) 
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-(--primary-text)/40 px-4 py-6 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && !deleting && onClose()}>
       <div role="alertdialog" aria-modal="true" aria-labelledby="delete-link-title" aria-describedby="delete-link-description" className="w-full max-w-md rounded-2xl border border-(--border) bg-(--surface) p-5 shadow-2xl sm:p-6">
         <span className="flex h-11 w-11 items-center text-(--danger)"><AlertTriangle className="h-5 w-5" /></span>
-        <h2 id="delete-link-title" className="mt-4 text-lg font-bold">Delete this short link?</h2>
-        <p id="delete-link-description" className="mt-2 text-sm leading-6 text-(--secondary-text)"><strong className="text-(--primary-text)">{link.title || link.shortID}</strong> and its recorded analytics will be permanently removed. This cannot be undone.</p>
+        <h2 id="delete-link-title" className="mt-4 text-lg font-bold">{preserveLink ? "Remove this QR code?" : "Delete this short link?"}</h2>
+        <p id="delete-link-description" className="mt-2 text-sm leading-6 text-(--secondary-text)"><strong className="text-(--primary-text)">{link.title || link.shortID}</strong>{preserveLink ? " will be removed from your QR codes. The underlying short link and its recorded analytics will be kept." : " and its recorded analytics will be permanently removed. This cannot be undone."}</p>
         {error && <p role="alert" className="mt-4 rounded-xl border border-(--danger)/35 bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)">{error}</p>}
-        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button ref={cancelRef} variant="secondary" onClick={onClose} disabled={deleting}>Cancel</Button><button type="button" onClick={onConfirm} disabled={deleting} className="focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-(--danger) px-4 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 className="h-4 w-4" />{deleting ? "Deleting…" : "Delete link"}</button></div>
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button ref={cancelRef} variant="secondary" onClick={onClose} disabled={deleting}>Cancel</Button><button type="button" onClick={onConfirm} disabled={deleting} className="focus-ring inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-(--danger) px-4 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"><Trash2 className="h-4 w-4" />{deleting ? "Removing…" : preserveLink ? "Remove QR code" : "Delete link"}</button></div>
       </div>
     </div>
   );

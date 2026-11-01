@@ -1,3 +1,4 @@
+const { getConfig } = require("../config/env");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
 const shortid = require("shortid");
@@ -45,7 +46,7 @@ function validateAlias(alias) {
 }
 
 function shortUrlFor(req, shortID) {
-  return `${req.protocol}://${req.get("host")}/${shortID}`;
+  return `${getConfig().backendUrl}/${shortID}`;
 }
 
 async function generateUniqueShortID() {
@@ -71,6 +72,7 @@ function serializeUrl(req, url, extra = {}) {
     alias: url.alias || null,
     title: url.title || "",
     status: url.status === "active" ? "active" : "blocked",
+    qrEnabled: url.qrEnabled !== false,
     createdby: url.createdby || null,
     createdAt: url.createdAt,
     updatedAt: url.updatedAt,
@@ -117,6 +119,7 @@ async function generateNewShortID(req, res) {
       redirectUrl: destination,
       alias: alias || undefined,
       title,
+      qrEnabled: Boolean(req.user && body.qr),
       createdby: req.user?._id || null,
     };
     if (!req.user) {
@@ -291,6 +294,28 @@ async function deleteUrl(req, res) {
   }
 }
 
+async function deleteQrCode(req, res) {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id))
+      return res.status(404).json({ error: "QR code not found" });
+    const url = await Url.findById(req.params.id);
+    if (!url) return res.status(404).json({ error: "QR code not found" });
+    if (!canManage(url, req.user))
+      return res.status(403).json({ error: "Forbidden" });
+
+    // Removing a QR must never remove its underlying short link or events.
+    url.qrEnabled = false;
+    await url.save();
+    return res.status(200).json({
+      message: "QR code deleted",
+      id: url._id,
+      qrEnabled: false,
+    });
+  } catch {
+    return res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 async function getRedirectUrl(req, res) {
   try {
     const urlEntry = await Url.findOne({ shortID: req.params.shortID });
@@ -370,6 +395,12 @@ async function getQrCode(req, res) {
       return res.status(403).json({ error: "Forbidden - You can only generate QR codes for URLs you own" });
     }
 
+    // Opening a QR from link management makes that QR available on the QR page.
+    if (urlEntry.qrEnabled === false) {
+      urlEntry.qrEnabled = true;
+      await urlEntry.save();
+    }
+
     const shortUrl = shortUrlFor(req, urlEntry.shortID);
     const qrUrl = `${shortUrl}?source=qr`;
     const qrCodeDataUrl = await QRCode.toDataURL(qrUrl, {
@@ -424,7 +455,7 @@ async function getRecentActivity(req, res) {
         linkId: event.urlId,
         shortID: url?.shortID || "",
         title: isQrScan ? "QR code scanned" : "Short link clicked",
-        detail: url?.shortID ? `ekurl.in/${url.shortID}` : "A link in your workspace",
+        detail: url?.shortID ? shortUrlFor(req, url.shortID) : "A link in your workspace",
         source: event.source || "link",
       };
     });
@@ -435,7 +466,7 @@ async function getRecentActivity(req, res) {
       linkId: url._id,
       shortID: url.shortID,
       title: "Short link created",
-      detail: `ekurl.in/${url.shortID}`,
+      detail: shortUrlFor(req, url.shortID),
       source: "workspace",
     }));
     const activity = [...eventItems, ...creationItems]
@@ -449,6 +480,7 @@ async function getRecentActivity(req, res) {
 
 module.exports = {
   claimGuestUrls,
+  deleteQrCode,
   deleteUrl,
   generateNewShortID,
   getRedirectUrl,

@@ -11,29 +11,10 @@ const app = express();
 const port = process.env.PORT || 3000;
 app.set("trust proxy", 1);
 
-// CORS origins are explicit because authenticated API responses use cookies.
-const defaultOrigins = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174",
-    "https://alokurl.vercel.app",
-    "https://ekurl.vercel.app",
-    "https://ekurl.in",
-    "https://app.ekurl.in",
-];
-const configuredOrigins = (process.env.CORS_ORIGINS || "")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-const corsOrigins = [...new Set([
-  ...defaultOrigins,
-  process.env.FRONTEND_URL,
-  ...configuredOrigins,
-].filter(Boolean))];
+const { validateEnvironment } = require("./config/env");
+const config = validateEnvironment();
 const corsOptions = {
-  origin: corsOrigins,
+  origin: config.corsOrigins,
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -57,6 +38,7 @@ app.use(express.json({ limit: "32kb" }));
 
 app.use((req, res, next) => {
   res.set("Referrer-Policy", "no-referrer");
+  res.set("X-Robots-Tag", "noindex, nofollow");
   next();
 });
 
@@ -72,7 +54,7 @@ app.use(["/urls", "/user"], (req, res, next) => {
 app.use("/urls", urlRouter);
 app.use("/user", userRouter);
 app.get("/", (req, res) => {
-  return res.redirect(301, "https://app.ekurl.in");
+  return res.redirect(301, config.frontendUrl);
 });
 app.get("/:shortID", getRedirectUrl);
 
@@ -92,7 +74,7 @@ app.use((error, req, res, next) => {
   });
 });
 
-connectDB()
+if (require.main === module) connectDB()
   .then(() => {
     app.listen(port, () => {
       console.log(`Db connected and Server is running on port ${port}`);
@@ -102,3 +84,5 @@ connectDB()
     console.error("Failed to start server:", error);
     process.exit(1);
   });
+
+module.exports = app;

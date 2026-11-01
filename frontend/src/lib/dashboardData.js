@@ -31,6 +31,8 @@ export const getInitials = (user) => {
 };
 
 export const getShortUrl = (url) => {
+  const shortID = url?.shortID || url?.url?.shortID;
+  if (shortID) return `${instance.defaults.baseURL}/${shortID}`;
   if (typeof url?.url === "string") return url.url;
   if (typeof url?.shortUrl === "string") return url.shortUrl;
   if (typeof url?.url?.shortUrl === "string") return url.url.shortUrl;
